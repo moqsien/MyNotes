@@ -83,8 +83,6 @@ type RoundTripper interface {
 }
 ```
 
-Go
-
 HTTP 请求的接收方可以实现 [`net/http.Handler`](https://draveness.me/golang/tree/net/http.Handler) 接口，其中实现了处理 HTTP 请求的逻辑，处理的过程中会调用 [`net/http.ResponseWriter`](https://draveness.me/golang/tree/net/http.ResponseWriter) 接口的方法构造 HTTP 响应，它提供的三个接口 `Header`、`Write` 和 `WriteHeader` 分别会获取 HTTP 响应、将数据写入负载以及写入响应头：
 
 ```go
@@ -98,8 +96,6 @@ type ResponseWriter interface {
 	WriteHeader(statusCode int)
 }
 ```
-
-Go
 
 客户端和服务端面对的都是双向的 HTTP 请求与响应，客户端构建请求并等待响应，服务端处理请求并返回响应。HTTP 请求和响应在标准库中不止有一种实现，它们都包含了层级结构，标准库中的 [`net/http.RoundTripper`](https://draveness.me/golang/tree/net/http.RoundTripper) 包含如下所示的层级结构：
 
@@ -156,8 +152,6 @@ type Request struct {
 }
 ```
 
-Go
-
 [`net/http.NewRequest`](https://draveness.me/golang/tree/net/http.NewRequest) 是标准库提供的用于创建请求的方法，这个方法会校验 HTTP 请求的字段并根据输入的参数拼装成新的请求结构体。
 
 ```go
@@ -195,8 +189,6 @@ func NewRequestWithContext(ctx context.Context, method, url string, body io.Read
 }
 ```
 
-Go
-
 请求拼装的过程比较简单，它会检查并校验输入的方法、URL 以及负载，然而初始化了新的 [`net/http.Request`](https://draveness.me/golang/tree/net/http.Request) 结构，处理负载的过程稍微有一些复杂，我们会根据负载的类型不同，使用不同的方法将它们包装成 `io.ReadCloser` 类型。
 
 ### 开启事务 [#](#%e5%bc%80%e5%90%af%e4%ba%8b%e5%8a%a1)
@@ -230,8 +222,6 @@ func (t *Transport) roundTrip(req *Request) (*Response, error) {
 }
 ```
 
-Go
-
 在默认情况下，我们都会使用 [`net/http.persistConn`](https://draveness.me/golang/tree/net/http.persistConn) 持久连接处理 HTTP 请求，该方法会先获取用于发送请求的连接，随后调用 [`net/http.persistConn.roundTrip`](https://draveness.me/golang/tree/net/http.persistConn.roundTrip)：
 
 ```go
@@ -263,8 +253,6 @@ func (t *Transport) roundTrip(req *Request) (*Response, error) {
 }
 ```
 
-Go
-
 [`net/http.Transport.getConn`](https://draveness.me/golang/tree/net/http.Transport.getConn) 是获取连接的方法，该方法会通过两种方法获取用于发送请求的连接：
 
 ```go
@@ -292,8 +280,6 @@ func (t *Transport) getConn(treq *transportRequest, cm connectMethod) (pc *persi
 	}
 }
 ```
-
-Go
 
 1.  调用 [`net/http.Transport.queueForIdleConn`](https://draveness.me/golang/tree/net/http.Transport.queueForIdleConn) 在队列中等待闲置的连接；
 2.  调用 [`net/http.Transport.queueForDial`](https://draveness.me/golang/tree/net/http.Transport.queueForDial) 在队列中等待建立新的连接；
@@ -329,8 +315,6 @@ func (t *Transport) dialConn(ctx context.Context, cm connectMethod) (pconn *pers
 }
 ```
 
-Go
-
 在创建新的 TCP 连接后，我们还会在后台为当前的连接创建两个 Goroutine，分别从 TCP 连接中读取数据或者向 TCP 连接写入数据，从建立连接的过程我们可以发现，如果我们为每一个 HTTP 请求都创建新的连接并启动 Goroutine 处理读写数据，会占用很多的资源。
 
 ### 等待请求 [#](#%e7%ad%89%e5%be%85%e8%af%b7%e6%b1%82)
@@ -361,8 +345,6 @@ func (pc *persistConn) roundTrip(req *transportRequest) (resp *Response, err err
 }
 ```
 
-Go
-
 每个 HTTP 请求都由另一个 Goroutine 中的 [`net/http.persistConn.writeLoop`](https://draveness.me/golang/tree/net/http.persistConn.writeLoop) 循环写入的，这两个 Goroutine 独立执行并通过 Channel 进行通信。[`net/http.Request.write`](https://draveness.me/golang/tree/net/http.Request.write) 会根据 [`net/http.Request`](https://draveness.me/golang/tree/net/http.Request) 结构中的字段按照 HTTP 协议组成 TCP 数据段：
 
 ```go
@@ -381,8 +363,6 @@ func (pc *persistConn) writeLoop() {
 }
 ```
 
-Go
-
 当我们调用 [`net/http.Request.write`](https://draveness.me/golang/tree/net/http.Request.write) 向请求中写入数据时，实际上直接写入了 [`net/http.persistConnWriter`](https://draveness.me/golang/tree/net/http.persistConnWriter) 中的 TCP 连接中，TCP 协议栈会负责将 HTTP 请求中的内容发送到目标服务器上：
 
 ```go
@@ -396,8 +376,6 @@ func (w persistConnWriter) Write(p []byte) (n int, err error) {
 	return
 }
 ```
-
-Go
 
 持久连接中的另一个读循环 [`net/http.persistConn.readLoop`](https://draveness.me/golang/tree/net/http.persistConn.readLoop) 会负责从 TCP 连接中读取数据并将数据发送会 HTTP 请求的调用方，真正负责解析 HTTP 协议的还是 [`net/http.ReadResponse`](https://draveness.me/golang/tree/net/http.ReadResponse)：
 
@@ -432,8 +410,6 @@ func ReadResponse(r *bufio.Reader, req *Request) (*Response, error) {
 }
 ```
 
-Go
-
 我们在上述方法中可以看到 HTTP 响应结构的大致框架，其中包含状态码、协议版本、请求头等内容，响应体还是在读取循环 [`net/http.persistConn.readLoop`](https://draveness.me/golang/tree/net/http.persistConn.readLoop) 中根据 HTTP 协议头进行解析的。
 
 ## 9.2.3 服务器 [#](#923-%e6%9c%8d%e5%8a%a1%e5%99%a8)
@@ -450,8 +426,6 @@ func main() {
     log.Fatal(http.ListenAndServe(":8080", nil))
 }
 ```
-
-Go
 
 上述的 `main` 函数只调用了两个标准库提供的函数，它们分别是用于注册处理器的 [`net/http.HandleFunc`](https://draveness.me/golang/tree/net/http.HandleFunc) 函数和用于监听和处理器请求的 [`net/http.ListenAndServe`](https://draveness.me/golang/tree/net/http.ListenAndServe)，多数的服务器框架都会包含这两类接口，分别负责注册处理器和处理外部请求，这一种非常常见的模式，我们在这里也会按照这两个维度介绍标准库如何支持 HTTP 服务器的实现。
 
@@ -470,8 +444,6 @@ func (mux *ServeMux) HandleFunc(pattern string, handler func(ResponseWriter, *Re
 	mux.Handle(pattern, HandlerFunc(handler))
 }
 ```
-
-Go
 
 上述方法会将处理器转换成 [`net/http.Handler`](https://draveness.me/golang/tree/net/http.Handler) 接口类型调用 [`net/http.ServeMux.Handle`](https://draveness.me/golang/tree/net/http.ServeMux.Handle) 注册处理器：
 
@@ -493,8 +465,6 @@ func (mux *ServeMux) Handle(pattern string, handler Handler) {
 }
 ```
 
-Go
-
 路由和对应的处理器会被组成 [`net/http.DefaultServeMux`](https://draveness.me/golang/tree/net/http.DefaultServeMux)，该结构会持有一个 [`net/http.muxEntry`](https://draveness.me/golang/tree/net/http.muxEntry) 哈希，其中存储了从 URL 到处理器的映射关系，HTTP 服务器在处理请求时就会使用该哈希查找处理器。
 
 ### 处理请求 [#](#%e5%a4%84%e7%90%86%e8%af%b7%e6%b1%82)
@@ -507,8 +477,6 @@ func ListenAndServe(addr string, handler Handler) error {
 	return server.ListenAndServe()
 }
 ```
-
-Go
 
 [`net/http.Server.ListenAndServe`](https://draveness.me/golang/tree/net/http.Server.ListenAndServe) 会使用网络库提供的 [`net.Listen`](https://draveness.me/golang/tree/net.Listen) 监听对应地址上的 TCP 连接并通过 [`net/http.Server.Serve`](https://draveness.me/golang/tree/net/http.Server.Serve) 处理客户端的请求：
 
@@ -524,8 +492,6 @@ func (srv *Server) ListenAndServe() error {
 	return srv.Serve(ln)
 }
 ```
-
-Go
 
 [`net/http.Server.Serve`](https://draveness.me/golang/tree/net/http.Server.Serve) 会在循环中监听外部的 TCP 连接并为每个连接调用 [`net/http.Server.newConn`](https://draveness.me/golang/tree/net/http.Server.newConn) 创建新的 [`net/http.conn`](https://draveness.me/golang/tree/net/http.conn)，它是 HTTP 连接的服务端表示：
 
@@ -555,8 +521,6 @@ func (srv *Server) Serve(l net.Listener) error {
 }
 ```
 
-Go
-
 创建了服务端的连接之后，标准库中的实现会为每个 HTTP 请求创建单独的 Goroutine 并在其中调用 [`net/http.Conn.serve`](https://draveness.me/golang/tree/net/http.Conn.serve) 方法，如果当前 HTTP 服务接收到了海量的请求，会在内部创建大量的 Goroutine，这可能会使整个服务质量明显降低无法处理请求。
 
 ```go
@@ -581,8 +545,6 @@ func (c *conn) serve(ctx context.Context) {
 }
 ```
 
-Go
-
 上述代码片段是我们简化后的连接处理过程，其中包含读取 HTTP 请求、调用 Handler 处理 HTTP 请求以及调用完成该请求。读取 HTTP 请求会调用 [`net/http.Conn.readRequest`](https://draveness.me/golang/tree/net/http.Conn.readRequest)，该方法会从连接中获取 HTTP 请求并构建一个实现了 [`net/http.ResponseWriter`](https://draveness.me/golang/tree/net/http.ResponseWriter) 接口的变量 [`net/http.response`](https://draveness.me/golang/tree/net/http.response)，向该结构体写入的数据都会被转发到它持有的缓冲区中：
 
 ```go
@@ -599,8 +561,6 @@ func (w *response) write(lenData int, dataB []byte, dataS string) (n int, err er
 	}
 }
 ```
-
-Go
 
 解析了 HTTP 请求并初始化 [`net/http.ResponseWriter`](https://draveness.me/golang/tree/net/http.ResponseWriter) 之后，我们就可以调用 [`net/http.serverHandler.ServeHTTP`](https://draveness.me/golang/tree/net/http.serverHandler.ServeHTTP) 查找处理器来处理 HTTP 请求了：
 
@@ -621,8 +581,6 @@ func (sh serverHandler) ServeHTTP(rw ResponseWriter, req *Request) {
 }
 ```
 
-Go
-
 如果当前的 HTTP 服务器中不包含任何处理器，我们会使用默认的 [`net/http.DefaultServeMux`](https://draveness.me/golang/tree/net/http.DefaultServeMux) 处理外部的 HTTP 请求。
 
 [`net/http.ServeMux`](https://draveness.me/golang/tree/net/http.ServeMux) 是一个 HTTP 请求的多路复用器，它可以接收外部的 HTTP 请求、根据请求的 URL 匹配并调用最合适的处理器：
@@ -633,8 +591,6 @@ func (mux *ServeMux) ServeHTTP(w ResponseWriter, r *Request) {
 	h.ServeHTTP(w, r)
 }
 ```
-
-Go
 
 经过一系列的函数调用，上述过程最终会调用 HTTP 服务器的 [`net/http.ServerMux.match`](https://draveness.me/golang/tree/net/http.ServerMux.match)，该方法会遍历前面注册过的路由表并根据特定规则进行匹配：
 
@@ -653,8 +609,6 @@ func (mux *ServeMux) match(path string) (h Handler, pattern string) {
 	return nil, ""
 }
 ```
-
-Go
 
 如果请求的路径和路由中的表项匹配成功，我们会调用表项中对应的处理器，处理器中包含的业务逻辑会通过 [`net/http.ResponseWriter`](https://draveness.me/golang/tree/net/http.ResponseWriter) 构建 HTTP 请求对应的响应并通过 TCP 连接发送回客户端。
 

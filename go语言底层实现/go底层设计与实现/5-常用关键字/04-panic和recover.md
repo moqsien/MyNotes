@@ -40,8 +40,6 @@ panic:
 ...
 ```
 
-Go
-
 当我们运行这段代码时会发现 `main` 函数中的 `defer` 语句并没有执行，执行的只有当前 Goroutine 中的 `defer`。
 
 前面我们曾经介绍过 `defer` 关键字对应的 [`runtime.deferproc`](https://draveness.me/golang/tree/runtime.deferproc) 会将延迟调用函数与调用方所在 Goroutine 进行关联。所以当程序发生崩溃时只会调用当前 Goroutine 的延迟调用函数也是非常合理的。
@@ -76,8 +74,6 @@ main.main()
 exit status 2
 ```
 
-Go
-
 仔细分析一下这个过程就能理解这种现象背后的原因，`recover` 只有在发生 `panic` 之后调用才会生效。然而在上面的控制流中，`recover` 是在 `panic` 之前调用的，并不满足生效的条件，所以我们需要在 `defer` 中使用 `recover` 关键字。
 
 ### 嵌套崩溃 [#](#%e5%b5%8c%e5%a5%97%e5%b4%a9%e6%ba%83)
@@ -108,8 +104,6 @@ goroutine 1 [running]:
 exit status 2
 ```
 
-Go
-
 从上述程序输出的结果，我们可以确定程序多次调用 `panic` 也不会影响 `defer` 函数的正常执行，所以使用 `defer` 进行收尾工作一般来说都是安全的。
 
 ## 5.4.2 数据结构 [#](#542-%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84)
@@ -128,8 +122,6 @@ type _panic struct {
 	goexit    bool
 }
 ```
-
-Go
 
 1.  `argp` 是指向 `defer` 调用时参数的指针；
 2.  `arg` 是调用 `panic` 时传入的参数；
@@ -183,8 +175,6 @@ func gopanic(e interface{}) {
 }
 ```
 
-Go
-
 需要注意的是，我们在上述函数中省略了三部分比较重要的代码：
 
 1.  恢复程序的 `recover` 分支中的代码；
@@ -214,8 +204,6 @@ func fatalpanic(msgs *_panic) {
 }
 ```
 
-Go
-
 打印崩溃消息后会调用 [`runtime.exit`](https://draveness.me/golang/tree/runtime.exit) 退出当前程序并返回错误码 2，程序的正常退出也是通过 [`runtime.exit`](https://draveness.me/golang/tree/runtime.exit) 实现的。
 
 ## 5.4.4 崩溃恢复 [#](#544-%e5%b4%a9%e6%ba%83%e6%81%a2%e5%a4%8d)
@@ -233,8 +221,6 @@ func gorecover(argp uintptr) interface{} {
 	return nil
 }
 ```
-
-Go
 
 该函数的实现很简单，如果当前 Goroutine 没有调用 `panic`，那么该函数会直接返回 `nil`，这也是崩溃恢复在非 `defer` 中调用会失效的原因。在正常情况下，它会修改 [`runtime._panic`](https://draveness.me/golang/tree/runtime._panic) 的 `recovered` 字段，[`runtime.gorecover`](https://draveness.me/golang/tree/runtime.gorecover) 函数中并不包含恢复程序的逻辑，程序的恢复是由 [`runtime.gopanic`](https://draveness.me/golang/tree/runtime.gopanic) 函数负责的：
 
@@ -268,8 +254,6 @@ func gopanic(e interface{}) {
 }
 ```
 
-Go
-
 上述这段代码也省略了 `defer` 的内联优化，它从 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 中取出了程序计数器 `pc` 和栈指针 `sp` 并调用 [`runtime.recovery`](https://draveness.me/golang/tree/runtime.recovery) 函数触发 Goroutine 的调度，调度之前会准备好 `sp`、`pc` 以及函数的返回值：
 
 ```go
@@ -285,8 +269,6 @@ func recovery(gp *g) {
 }
 ```
 
-Go
-
 当我们在调用 `defer` 关键字时，调用时的栈指针 `sp` 和程序计数器 `pc` 就已经存储到了 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 结构体中，这里的 [`runtime.gogo`](https://draveness.me/golang/tree/runtime.gogo) 函数会跳回 `defer` 关键字调用的位置。
 
 [`runtime.recovery`](https://draveness.me/golang/tree/runtime.recovery) 在调度过程中会将函数的返回值设置成 1。从 [`runtime.deferproc`](https://draveness.me/golang/tree/runtime.deferproc) 的注释中我们会发现，当 [`runtime.deferproc`](https://draveness.me/golang/tree/runtime.deferproc) 函数的返回值是 1 时，编译器生成的代码会直接跳转到调用方函数返回之前并执行 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn)：
@@ -297,8 +279,6 @@ func deferproc(siz int32, fn *funcval) {
 	return0()
 }
 ```
-
-Go
 
 跳转到 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn) 函数之后，程序就已经从 `panic` 中恢复了并执行正常的逻辑，而 [`runtime.gorecover`](https://draveness.me/golang/tree/runtime.gorecover) 函数也能从 [`runtime._panic`](https://draveness.me/golang/tree/runtime._panic) 结构中取出了调用 `panic` 时传入的 `arg` 参数并返回给调用方。
 

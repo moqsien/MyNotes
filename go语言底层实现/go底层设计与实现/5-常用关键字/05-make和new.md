@@ -15,8 +15,6 @@ hash := make(map[int]bool, 10)
 ch := make(chan int, 5)
 ```
 
-Go
-
 1.  `slice` 是一个包含 `data`、`cap` 和 `len` 的结构体 [`reflect.SliceHeader`](https://draveness.me/golang/tree/reflect.SliceHeader)；
 2.  `hash` 是一个指向 [`runtime.hmap`](https://draveness.me/golang/tree/runtime.hmap) 结构体的指针；
 3.  `ch` 是一个指向 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 结构体的指针；
@@ -29,8 +27,6 @@ i := new(int)
 var v int
 i := &v
 ```
-
-Go
 
 上述代码片段中的两种不同初始化方法是等价的，它们都会创建一个指向 `int` 零值的指针。
 
@@ -80,8 +76,6 @@ func (s *state) expr(n *Node) *ssa.Value {
 }
 ```
 
-Go
-
 需要注意的是，无论是直接使用 `new`，还是使用 `var` 初始化变量，它们在编译器看来都是 `ONEW` 和 `ODCL` 节点。如果变量会逃逸到堆上，这些节点在这一阶段都会被 [`cmd/compile/internal/gc.walkstmt`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkstmt) 转换成通过 [`runtime.newobject`](https://draveness.me/golang/tree/runtime.newobject) 函数并在堆上申请内存：
 
 ```go
@@ -114,8 +108,6 @@ func walkstmt(n *Node) *Node {
 }
 ```
 
-Go
-
 不过这也不是绝对的，如果通过 `var` 或者 `new` 创建的变量不需要在当前作用域外生存，例如不用作为返回值返回给调用方，那么就不需要初始化在堆上。
 
 [`runtime.newobject`](https://draveness.me/golang/tree/runtime.newobject) 函数会获取传入类型占用空间的大小，调用 [`runtime.mallocgc`](https://draveness.me/golang/tree/runtime.mallocgc) 在堆上申请一片内存空间并返回指向这片内存空间的指针：
@@ -125,8 +117,6 @@ func newobject(typ *_type) unsafe.Pointer {
 	return mallocgc(typ.size, typ, true)
 }
 ```
-
-Go
 
 [`runtime.mallocgc`](https://draveness.me/golang/tree/runtime.mallocgc) 函数的实现大概有 200 多行代码，我们会在后面的章节中详细分析 Go 语言的内存管理机制。
 

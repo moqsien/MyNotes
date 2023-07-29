@@ -34,8 +34,6 @@ func main() {
 	...
 ```
 
-Go
-
 这里将上述汇编指令的执行过程分成三个部分进行分析：
 
 1.  0029 \~ 0031 行负责循环的初始化；
@@ -60,8 +58,6 @@ func main() {
 }
 ```
 
-Go
-
 在汇编语言中，无论是经典的 for 循环还是 for-range 循环都会使用 `JMP` 等命令跳回循环体的开始位置复用代码。从不同循环具有相同的汇编代码可以猜到，使用 for-range 的控制结构最终也会被 Go 语言编译器转换成普通的 for 循环，后面的分析也会印证这一点。
 
 ## 5.1.1 现象 [#](#511-%e7%8e%b0%e8%b1%a1)
@@ -85,8 +81,6 @@ $ go run main.go
 1 2 3 1 2 3
 ```
 
-Go
-
 上述代码的输出意味着循环只遍历了原始切片中的三个元素，我们在遍历切片时追加的元素不会增加循环的执行次数，所以循环最终还是停了下来。
 
 ### 神奇的指针 [#](#%e7%a5%9e%e5%a5%87%e7%9a%84%e6%8c%87%e9%92%88)
@@ -109,8 +103,6 @@ $ go run main.go
 3 3 3
 ```
 
-Go
-
 一些有经验的开发者不经意也会犯这种错误，正确的做法应该是使用 `&arr[i]` 替代 `&v`，我们会在下面分析这一现象背后的原因。
 
 ### 遍历清空数组 [#](#%e9%81%8d%e5%8e%86%e6%b8%85%e7%a9%ba%e6%95%b0%e7%bb%84)
@@ -125,8 +117,6 @@ func main() {
 	}
 }
 ```
-
-Go
 
 依次遍历切片和哈希看起来是非常耗费性能的，因为数组、切片和哈希占用的内存空间都是连续的，所以最快的方法是直接清空这片内存中的内容，当我们编译上述代码时会得到以下的汇编指令：
 
@@ -147,8 +137,6 @@ Go
 	...
 ```
 
-Go
-
 从生成的汇编代码我们可以看出，编译器会直接使用 [`runtime.memclrNoHeapPointers`](https://draveness.me/golang/tree/runtime.memclrNoHeapPointers) 清空切片中的数据，这也是我们在下面的小节会介绍的内容。
 
 ### 随机遍历 [#](#%e9%9a%8f%e6%9c%ba%e9%81%8d%e5%8e%86)
@@ -167,8 +155,6 @@ func main() {
 	}
 }
 ```
-
-Go
 
 两次运行上述代码可能会得到不同的结果，第一次会打印 `2 3 1`，第二次会打印 `1 2 3`，如果我们运行的次数足够多，最后会得到几种不同的遍历顺序。
 
@@ -203,8 +189,6 @@ for Ninit; Left; Right {
 }
 ```
 
-Go
-
 在生成 SSA 中间代码的阶段，[`cmd/compile/internal/gc.state.stmt`](https://draveness.me/golang/tree/cmd/compile/internal/gc.state.stmt) 方法在发现传入的节点类型是 `OFOR` 时会执行以下的代码块，这段代码会将循环中的代码分成不同的块：
 
 ```go
@@ -229,8 +213,6 @@ func (s *state) stmt(n *Node) {
 	}
 }
 ```
-
-Go
 
 一个常见的 for 循环代码会被 [`cmd/compile/internal/gc.state.stmt`](https://draveness.me/golang/tree/cmd/compile/internal/gc.state.stmt) 转换成下面的控制结构，该结构中包含了 4 个不同的块，这些代码块之间的连接表示汇编语言中的跳转关系，与我们理解的 for 循环控制结构没有太多的差别。
 
@@ -268,8 +250,6 @@ func walkrange(n *Node) *Node {
 		}
 ```
 
-Go
-
 [`cmd/compile/internal/gc.arrayClear`](https://draveness.me/golang/tree/cmd/compile/internal/gc.arrayClear) 是一个非常有趣的优化，它会优化 Go 语言遍历数组或者切片并删除全部元素的逻辑：
 
 ```go
@@ -286,8 +266,6 @@ if len(a) != 0 {
 	i = len(a) - 1
 }
 ```
-
-Go
 
 相比于依次清除数组或者切片中的数据，Go 语言会直接使用 [`runtime.memclrNoHeapPointers`](https://draveness.me/golang/tree/runtime.memclrNoHeapPointers) 或者 [`runtime.memclrHasPointers`](https://draveness.me/golang/tree/runtime.memclrHasPointers) 清除目标数组内存空间中的全部数据，并在执行完成后更新遍历数组的索引，这也印证了我们在遍历清空数组一节中观察到的现象。
 
@@ -310,8 +288,6 @@ Go
 		}
 ```
 
-Go
-
 如果循环是 `for range a {}`，那么就满足了上述代码中的条件 `v1 == nil`，即循环不关心数组的索引和数据，这种循环会被编译器转换成如下形式：
 
 ```go
@@ -324,8 +300,6 @@ for ; hv1 < hn; hv1++ {
 }
 ```
 
-Go
-
 这是 `ORANGE` 结构在编译期间被转换的最简单形式，由于原代码不需要获取数组的索引和元素，只需要使用数组或者切片的数量执行对应次数的循环，所以会生成一个最简单的 for 循环。
 
 如果我们在遍历数组时需要使用索引 `for i := range a {}`，那么编译器会继续会执行下面的代码：
@@ -336,8 +310,6 @@ Go
 			break
 		}
 ```
-
-Go
 
 `v2 == nil` 意味着调用方不关心数组的元素，只关心遍历数组使用的索引。它会将 `for i := range a {}` 转换成下面的逻辑，与第一种循环相比，这种循环在循环体中添加了 `v1 := hv1` 语句，传递遍历数组时的索引：
 
@@ -351,8 +323,6 @@ for ; hv1 < hn; hv1++ {
     ...
 }
 ```
-
-Go
 
 上面两种情况虽然也是使用 range 会经常遇到的情况，但是同时去遍历索引和元素也很常见。处理这种情况会使用下面这段的代码：
 
@@ -371,8 +341,6 @@ Go
 }
 ```
 
-Go
-
 这段代码处理的使用者同时关心索引和切片的情况。它不仅会在循环体中插入更新索引的语句，还会插入赋值操作让循环体内部的代码能够访问数组中的元素：
 
 ```go
@@ -387,8 +355,6 @@ for ; hv1 < hn; hv1++ {
     ...
 }
 ```
-
-Go
 
 对于所有的 range 循环，Go 语言都会在编译期将原切片或者数组赋值给一个新变量 `ha`，在赋值的过程中就发生了拷贝，而我们又通过 `len` 关键字预先获取了切片的长度，所以在循环中追加新的元素也不会改变循环执行的次数，这也就解释了循环永动机一节提到的现象。
 
@@ -407,8 +373,6 @@ func main() {
 }
 ```
 
-Go
-
 因为在循环中获取返回变量的地址都完全相同，所以会发生神奇的指针一节中的现象。因此当我们想要访问数组中元素所在的地址时，不应该直接获取 range 返回的变量地址 `&v2`，而应该使用 `&a[index]` 这种形式。
 
 ### 哈希表 [#](#%e5%93%88%e5%b8%8c%e8%a1%a8)
@@ -425,8 +389,6 @@ for ; hit.key != nil; mapiternext(&hit) {
     val := *hit.val
 }
 ```
-
-Go
 
 上述代码是展开 `for key, val := range hash {}` 后的结果，在 [`cmd/compile/internal/gc.walkrange`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkrange) 处理 `TMAP` 节点时，编译器会根据 range 返回值的数量在循环体中插入需要的赋值语句：
 
@@ -450,8 +412,6 @@ func mapiterinit(t *maptype, h *hmap, it *hiter) {
 	mapiternext(it)
 }
 ```
-
-Go
 
 该函数会初始化 [`runtime.hiter`](https://draveness.me/golang/tree/runtime.hiter) 结构体中的字段，并通过 [`runtime.fastrand`](https://draveness.me/golang/tree/runtime.fastrand) 生成一个随机数帮助我们随机选择一个遍历桶的起始位置。Go 团队在设计哈希表的遍历时就不想让使用者依赖固定的遍历顺序，所以引入了随机数保证遍历的随机性。
 
@@ -482,8 +442,6 @@ next:
 		i = 0
 	}
 ```
-
-Go
 
 这段代码主要有两个作用：
 
@@ -516,8 +474,6 @@ Go
 }
 ```
 
-Go
-
 当上述函数已经遍历了正常桶后，会通过 [`runtime.bmap.overflow`](https://draveness.me/golang/tree/runtime.bmap.overflow) 遍历哈希中的溢出桶。
 
 ![golang-range-map-and-buckets](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-range-map-and-buckets.png)
@@ -544,8 +500,6 @@ for hv1 := 0; hv1 < len(ha); {
 }
 ```
 
-Go
-
 在前面的字符串一节中我们曾经介绍过字符串是一个只读的字节数组切片，所以范围循环在编译期间生成的框架与切片非常类似，只是细节有一些不同。
 
 使用下标访问字符串中的元素时得到的就是字节，但是这段代码会将当前的字节转换成 `rune` 类型。如果当前的 `rune` 是 ASCII 的，那么只会占用一个字节长度，每次循环体运行之后只需要将索引加一，但是如果当前 `rune` 占用了多个字节就会使用 [`runtime.decoderune`](https://draveness.me/golang/tree/runtime.decoderune) 函数解码，具体的过程就不在这里详细介绍了。
@@ -563,8 +517,6 @@ for ; hb != false; hv1, hb = <-ha {
     ...
 }
 ```
-
-Go
 
 这里的代码可能与编译器生成的稍微有一些出入，但是结构和效果是完全相同的。该循环会使用 `<-ch` 从管道中取出等待处理的值，这个操作会调用 [`runtime.chanrecv2`](https://draveness.me/golang/tree/runtime.chanrecv2) 并阻塞当前的协程，当 [`runtime.chanrecv2`](https://draveness.me/golang/tree/runtime.chanrecv2) 返回时会根据布尔值 `hb` 判断当前的值是否存在：
 

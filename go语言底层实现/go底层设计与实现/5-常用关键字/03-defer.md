@@ -21,8 +21,6 @@ func createPost(db *gorm.DB) error {
 }
 ```
 
-Go
-
 在使用数据库事务时，我们可以使用上面的代码在创建事务后就立刻调用 `Rollback` 保证事务一定会回滚。哪怕事务真的执行成功了，那么调用 `tx.Commit()` 之后再执行 `tx.Rollback()` 也不会影响已经提交的事务。
 
 ## 5.3.1 现象 [#](#531-%e7%8e%b0%e8%b1%a1)
@@ -51,8 +49,6 @@ $ go run main.go
 0
 ```
 
-Go
-
 运行上述代码会倒序执行传入 `defer` 关键字的所有表达式，因为最后一次调用 `defer` 时传入了 `fmt.Println(4)`，所以这段代码会优先打印 4。我们可以通过下面这个简单例子强化对 `defer` 执行时机的理解：
 
 ```go
@@ -70,8 +66,6 @@ block ends
 main ends
 defer runs
 ```
-
-Go
 
 从上述代码的输出我们会发现，`defer` 传入的函数不是在退出代码块的作用域时执行的，它只会在当前函数和方法返回之前被调用。
 
@@ -91,8 +85,6 @@ $ go run main.go
 0s
 ```
 
-Go
-
 然而上述代码的运行结果并不符合我们的预期，这个现象背后的原因是什么呢？经过分析，我们会发现调用 `defer` 关键字会立刻拷贝函数中引用的外部参数，所以 `time.Since(startedAt)` 的结果不是在 `main` 函数退出之前计算的，而是在 `defer` 关键字调用时计算的，最终导致上述代码输出 0s。
 
 想要解决这个问题的方法非常简单，我们只需要向 `defer` 关键字传入匿名函数：
@@ -108,8 +100,6 @@ func main() {
 $ go run main.go
 1s
 ```
-
-Go
 
 虽然调用 `defer` 关键字时也使用值传递，但是因为拷贝的是函数指针，所以 `time.Since(startedAt)` 会在 `main` 函数返回前调用并打印出符合预期的结果。
 
@@ -129,8 +119,6 @@ type _defer struct {
 	link      *_defer
 }
 ```
-
-Go
 
 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 结构体是延迟调用链表上的一个元素，所有的结构体都会通过 `link` 字段串联成链表。
 
@@ -170,8 +158,6 @@ func (s *state) stmt(n *Node) {
 }
 ```
 
-Go
-
 堆分配、栈分配和开放编码是处理 `defer` 关键字的三种方法，早期的 Go 语言会在堆上分配 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 结构体，不过该实现的性能较差，Go 语言在 1.13 中引入栈上分配的结构体，减少了 30\% 的额外开销[1](#fn:1)，并在 1.14 中引入了基于开放编码的 `defer`，使得该关键字的额外开销可以忽略不计[2](#fn:2)，我们在一节中会分别介绍三种不同类型 `defer` 的设计与实现原理。
 
 ## 5.3.4 堆上分配 [#](#534-%e5%a0%86%e4%b8%8a%e5%88%86%e9%85%8d)
@@ -208,8 +194,6 @@ func (s *state) call(n *Node, k callKind, returnResultAddr bool) *ssa.Value {
 }
 ```
 
-Go
-
 从上述代码中我们能看到，`defer` 关键字在运行期间会调用 [`runtime.deferproc`](https://draveness.me/golang/tree/runtime.deferproc)，这个函数接收了参数的大小和闭包所在的地址两个参数。
 
 编译器不仅将 `defer` 关键字都转换成 [`runtime.deferproc`](https://draveness.me/golang/tree/runtime.deferproc) 函数，它还会通过以下三个步骤为所有调用 `defer` 的函数末尾插入 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn) 的函数调用：
@@ -227,8 +211,6 @@ func (s *state) exit() *ssa.Block {
 	...
 }
 ```
-
-Go
 
 当运行时将 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 分配到堆上时，Go 语言的编译器不仅将 `defer` 转换成了 [`runtime.deferproc`](https://draveness.me/golang/tree/runtime.deferproc)，还在所有调用 `defer` 的函数结尾插入了 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn)。上述两个运行时函数是 `defer` 关键字运行时机制的入口，它们分别承担了不同的工作：
 
@@ -265,8 +247,6 @@ func deferproc(siz int32, fn *funcval) {
 	return0()
 }
 ```
-
-Go
 
 最后调用的 [`runtime.return0`](https://draveness.me/golang/tree/runtime.return0) 是唯一一个不会触发延迟调用的函数，它可以避免递归 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn) 的递归调用。
 
@@ -307,8 +287,6 @@ func newdefer(siz int32) *_defer {
 }
 ```
 
-Go
-
 无论使用哪种方式，只要获取到 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 结构体，它都会被追加到所在 Goroutine `_defer` 链表的最前面。
 
 ![golang-new-defer](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-new-defer.png)
@@ -345,8 +323,6 @@ func deferreturn(arg0 uintptr) {
 }
 ```
 
-Go
-
 [`runtime.jmpdefer`](https://draveness.me/golang/tree/runtime.jmpdefer) 是一个用汇编语言实现的运行时函数，它的主要工作是跳转到 `defer` 所在的代码段并在执行结束之后跳转回 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn)。
 
 ```go
@@ -362,8 +338,6 @@ TEXT runtime·jmpdefer(SB), NOSPLIT, $0-8
 	MOVL	0(DX), BX
 	JMP	BX	// but first run the deferred function
 ```
-
-Go
 
 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn) 会多次判断当前 Goroutine 的 `_defer` 链表中是否有未执行的结构体，该函数只有在所有延迟函数都执行后才会返回。
 
@@ -396,8 +370,6 @@ func (s *state) call(n *Node, k callKind) *ssa.Value {
 }
 ```
 
-Go
-
 因为在编译期间我们已经创建了 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 结构体，所以在运行期间 [`runtime.deferprocStack`](https://draveness.me/golang/tree/runtime.deferprocStack) 只需要设置一些未在编译期间初始化的字段，就可以将栈上的 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 追加到函数的链表上：
 
 ```go
@@ -419,8 +391,6 @@ func deferprocStack(d *_defer) {
 }
 ```
 
-Go
-
 除了分配位置的不同，栈上分配和堆上分配的 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 并没有本质的不同，而该方法可以适用于绝大多数的场景，与堆上分配的 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 相比，该方法可以将 `defer` 关键字的额外开销降低 \~30\%。
 
 ## 5.3.5 开放编码 [#](#535-%e5%bc%80%e6%94%be%e7%bc%96%e7%a0%81)
@@ -432,8 +402,6 @@ With normal (stack-allocated) defers only:         35.4  ns/op
 With open-coded defers:                             5.6  ns/op
 Cost of function call alone (remove defer keyword): 4.4  ns/op
 ```
-
-Go
 
 然而开放编码作为一种优化 `defer` 关键字的方法，它不是在所有的场景下都会开启的，开放编码只会在满足以下的条件时启用：
 
@@ -467,8 +435,6 @@ func walkstmt(n *Node) *Node {
 }
 ```
 
-Go
-
 就像我们上面提到的，如果函数中 `defer` 关键字的数量多于 8 个或者 `defer` 关键字处于 `for` 循环中，那么我们在这里都会禁用开放编码优化，使用上两节提到的方法处理 `defer`。
 
 在 SSA 中间代码生成阶段的 [`cmd/compile/internal/gc.buildssa`](https://draveness.me/golang/tree/cmd/compile/internal/gc.buildssa) 中，我们也能够看到启用开放编码优化的其他条件，也就是返回语句的数量与 `defer` 数量的乘积需要小于 15：
@@ -485,8 +451,6 @@ func buildssa(fn *Node, worker int) *ssa.Func {
 	...
 }
 ```
-
-Go
 
 中间代码生成的这两个步骤会决定当前函数是否应该使用开放编码优化 `defer` 关键字，一旦确定使用开放编码，就会在编译期间初始化延迟比特和延迟记录。
 
@@ -508,8 +472,6 @@ func buildssa(fn *Node, worker int) *ssa.Func {
 	}
 }
 ```
-
-Go
 
 延迟比特中的每一个比特位都表示该位对应的 `defer` 关键字是否需要被执行，如下图所示，其中 8 个比特的倒数第二个比特在函数返回前被设置成了 1，那么该比特位对应的函数会在函数返回前执行：
 
@@ -542,8 +504,6 @@ if deferBits & 1 << 0 != 0 {
 }
 ```
 
-Go
-
 延迟比特的作用就是标记哪些 `defer` 关键字在函数中被执行，这样在函数返回时可以根据对应 `deferBits` 的内容确定执行的函数，而正是因为 `deferBits` 的大小仅为 8 比特，所以该优化的启用条件为函数中的 `defer` 关键字少于 8 个。
 
 上述伪代码展示了开放编码的实现原理，但是仍然缺少了一些细节，例如：传入 `defer` 关键字的函数和参数都会存储在如下所示的 [`cmd/compile/internal/gc.openDeferInfo`](https://draveness.me/golang/tree/cmd/compile/internal/gc.openDeferInfo) 结构体中：
@@ -559,8 +519,6 @@ type openDeferInfo struct {
 	argNodes    []*Node
 }
 ```
-
-Go
 
 当编译器在调用 [`cmd/compile/internal/gc.buildssa`](https://draveness.me/golang/tree/cmd/compile/internal/gc.buildssa) 构建中间代码时会通过 [`cmd/compile/internal/gc.state.openDeferRecord`](https://draveness.me/golang/tree/cmd/compile/internal/gc.state.openDeferRecord) 方法在栈上构建结构体，该结构体的 `closure` 中存储着调用的函数，`rcvr` 中存储着方法的接收者，而最后的 `argVals` 中存储了函数的参数。
 
@@ -582,8 +540,6 @@ func deferreturn(arg0 uintptr) {
 	...
 }
 ```
-
-Go
 
 该函数为开放编码做了特殊的优化，运行时会调用 [`runtime.runOpenDeferFrame`](https://draveness.me/golang/tree/runtime.runOpenDeferFrame) 执行活跃的开放编码延迟函数，该函数会执行以下的工作：
 
@@ -628,8 +584,6 @@ func runOpenDeferFrame(gp *g, d *_defer) bool {
 	return done
 }
 ```
-
-Go
 
 Go 语言的编译器为了支持开放编码在中间代码生成阶段做出了很多修改，我们在这里虽然省略了很多细节，但是也可以很好地展示 `defer` 关键字的实现原理。
 

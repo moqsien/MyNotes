@@ -27,8 +27,6 @@ func fibonacci(c, quit chan int) {
 }
 ```
 
-Go
-
 上述控制结构会等待 `c <- x` 或者 `<-quit` 两个表达式中任意一个返回。无论哪一个表达式返回都会立刻执行 `case` 中的代码，当 `select` 中的两个 `case` 同时被触发时，会随机执行其中的一个。
 
 ## 5.2.1 现象 [#](#521-%e7%8e%b0%e8%b1%a1)
@@ -65,8 +63,6 @@ $ go run main.go
 default
 ```
 
-Go
-
 只要我们稍微想一下，就会发现 Go 语言设计的这个现象很合理。`select` 的作用是同时监听多个 `case` 是否可以执行，如果多个 Channel 都不能执行，那么运行 `default` 也是理所当然的。
 
 非阻塞的 Channel 发送和接收操作还是很有必要的，在很多场景下我们不希望 Channel 操作阻塞当前 Goroutine，只是想看看 Channel 的可读或者可写状态，如下所示：
@@ -92,8 +88,6 @@ default:
     return nil
 }
 ```
-
-Go
 
 在上面这段代码中，我们不关心到底多少个任务执行失败了，只关心是否存在返回错误的任务，最后的 `select` 语句能很好地完成这个任务。然而使用 `select` 实现非阻塞收发不是最初的设计，Go 语言在最初版本使用 `x, ok := <-c` 实现非阻塞的收发，以下是与非阻塞收发相关的提交：
 
@@ -134,8 +128,6 @@ case1
 ...
 ```
 
-Go
-
 从上述代码输出的结果中我们可以看到，`select` 在遇到多个 `<-ch` 同时满足可读或者可写条件时会随机选择一个 `case` 执行其中的代码。
 
 这个设计是在十多年前被 [select](https://github.com/golang/go/commit/cb9b1038db77198c2b0961634cf161258af2374d) 提交[5](#fn:5)引入并一直保留到现在的，虽然中间经历过一些修改[6](#fn:6)，但是语义一直都没有改变。在上面的代码中，两个 `case` 都是同时满足执行条件的，如果我们按照顺序依次判断，那么后面的条件永远都会得不到执行，而随机的引入就是为了避免饥饿问题的发生。
@@ -150,8 +142,6 @@ type scase struct {
 	elem unsafe.Pointer // data element
 }
 ```
-
-Go
 
 因为非默认的 `case` 中都与 Channel 的发送和接收有关，所以 [`runtime.scase`](https://draveness.me/golang/tree/runtime.scase) 结构体中也包含一个 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 类型的字段存储 `case` 中使用的 Channel。
 
@@ -189,8 +179,6 @@ func walkselectcases(cases *Nodes) []*Node {
 }
 ```
 
-Go
-
 这段代码很简单并且容易理解，它直接将类似 `select {}` 的语句转换成调用 [`runtime.block`](https://draveness.me/golang/tree/runtime.block) 函数：
 
 ```go
@@ -198,8 +186,6 @@ func block() {
 	gopark(nil, nil, waitReasonSelectNoCases, traceEvGoStop, 1)
 }
 ```
-
-Go
 
 [`runtime.block`](https://draveness.me/golang/tree/runtime.block) 的实现非常简单，它会调用 [`runtime.gopark`](https://draveness.me/golang/tree/runtime.gopark) 让出当前 Goroutine 对处理器的使用权并传入等待原因 `waitReasonSelectNoCases`。
 
@@ -223,8 +209,6 @@ if ch == nil {
 v, ok := <-ch // case ch <- v
 ...
 ```
-
-Go
 
 [`cmd/compile/internal/gc.walkselectcases`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkselectcases) 在处理单操作 `select` 语句时，会根据 Channel 的收发情况生成不同的语句。当 `case` 中的 Channel 是空指针时，会直接挂起当前 Goroutine 并陷入永久休眠。
 
@@ -251,8 +235,6 @@ if selectnbsend(ch, i) {
 }
 ```
 
-Go
-
 这段代码中最重要的就是 [`runtime.selectnbsend`](https://draveness.me/golang/tree/runtime.selectnbsend)，它为我们提供了向 Channel 非阻塞地发送数据的能力。我们在 Channel 一节介绍了向 Channel 发送数据的 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 函数包含一个 `block` 参数，该参数会决定这一次的发送是不是阻塞的：
 
 ```go
@@ -260,8 +242,6 @@ func selectnbsend(c *hchan, elem unsafe.Pointer) (selected bool) {
 	return chansend(c, elem, false, getcallerpc())
 }
 ```
-
-Go
 
 由于我们向 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 函数传入了非阻塞，所以在不存在接收方或者缓冲区空间不足时，当前 Goroutine 都不会阻塞而是会直接返回。
 
@@ -286,8 +266,6 @@ if selectnbrecv(&v, ch) { // if selectnbrecv2(&v, &ok, ch) {
 }
 ```
 
-Go
-
 返回值数量不同会导致使用函数的不同，两个用于非阻塞接收消息的函数 [`runtime.selectnbrecv`](https://draveness.me/golang/tree/runtime.selectnbrecv) 和 [`runtime.selectnbrecv2`](https://draveness.me/golang/tree/runtime.selectnbrecv2) 只是对 [`runtime.chanrecv`](https://draveness.me/golang/tree/runtime.chanrecv) 返回值的处理稍有不同：
 
 ```go
@@ -301,8 +279,6 @@ func selectnbrecv2(elem unsafe.Pointer, received *bool, c *hchan) (selected bool
 	return
 }
 ```
-
-Go
 
 因为接收方不需要，所以 [`runtime.selectnbrecv`](https://draveness.me/golang/tree/runtime.selectnbrecv) 会直接忽略返回的布尔值，而 [`runtime.selectnbrecv2`](https://draveness.me/golang/tree/runtime.selectnbrecv2) 会将布尔值回传给调用方。与 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 一样，[`runtime.chanrecv`](https://draveness.me/golang/tree/runtime.chanrecv) 也提供了一个 `block` 参数用于控制这次接收是否阻塞。
 
@@ -339,8 +315,6 @@ if chosen == 2 {
     break
 }
 ```
-
-Go
 
 展开后的代码片段中最重要的就是用于选择待执行 `case` 的运行时函数 [`runtime.selectgo`](https://draveness.me/golang/tree/runtime.selectgo)，这也是我们要关注的重点。因为这个函数的实现比较复杂， 所以这里分两部分分析它的执行过程：
 
@@ -381,8 +355,6 @@ func selectgo(cas0 *scase, order0 *uint16, ncases int) (int, bool) {
 	...
 }
 ```
-
-Go
 
 轮询顺序 `pollOrder` 和加锁顺序 `lockOrder` 分别是通过以下的方式确认的：
 
@@ -455,8 +427,6 @@ func selectgo(cas0 *scase, order0 *uint16, ncases int) (int, bool) {
 }
 ```
 
-Go
-
 除了将当前 Goroutine 对应的 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 结构体加入队列之外，这些结构体都会被串成链表附着在 Goroutine 上。在入队之后会调用 [`runtime.gopark`](https://draveness.me/golang/tree/runtime.gopark) 挂起当前 Goroutine 等待调度器的唤醒。
 
 ![Golang-Select-Waiting](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/Golang-Select-Waiting.png)
@@ -499,8 +469,6 @@ func selectgo(cas0 *scase, order0 *uint16, ncases int) (int, bool) {
 }
 ```
 
-Go
-
 第三次遍历全部 `case` 时，我们会先获取当前 Goroutine 接收到的参数 `sudog` 结构，我们会依次对比所有 `case` 对应的 `sudog` 结构找到被唤醒的 `case`，获取该 `case` 对应的索引并返回。
 
 由于当前的 `select` 结构找到了一个 `case` 执行，那么剩下 `case` 中没有被用到的 `sudog` 就会被忽略并且释放掉。为了不影响 Channel 的正常使用，我们还是需要将这些废弃的 `sudog` 从 Channel 中出队。
@@ -534,8 +502,6 @@ bufsend:
 	goto retc
 ```
 
-Go
-
 这里在缓冲区进行的操作和直接调用 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 和 [`runtime.chanrecv`](https://draveness.me/golang/tree/runtime.chanrecv) 差不多，上述两个过程在执行结束之后都会直接跳到 `retc` 字段。
 
 两个直接收发 Channel 的情况会调用运行时函数 [`runtime.send`](https://draveness.me/golang/tree/runtime.send) 和 [`runtime.recv`](https://draveness.me/golang/tree/runtime.recv)，这两个函数会与处于休眠状态的 Goroutine 打交道：
@@ -550,8 +516,6 @@ send:
 	send(c, sg, cas.elem, func() { selunlock(scases, lockorder) }, 2)
 	goto retc
 ```
-
-Go
 
 不过如果向关闭的 Channel 发送数据或者从关闭的 Channel 中接收数据，情况就稍微有一点复杂了：
 
@@ -571,8 +535,6 @@ sclose:
 	selunlock(scases, lockorder)
 	panic(plainError("send on closed channel"))
 ```
-
-Go
 
 总体来看，`select` 语句中的 Channel 收发操作和直接操作 Channel 没有太多出入，只是由于 `select` 多出了 `default` 关键字所以会支持非阻塞的收发。
 

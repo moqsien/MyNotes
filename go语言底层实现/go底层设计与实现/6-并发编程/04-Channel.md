@@ -77,8 +77,6 @@ type hchan struct {
 }
 ```
 
-Go
-
 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 结构体中的五个字段 `qcount`、`dataqsiz`、`buf`、`sendx`、`recv` 构建底层的循环队列：
 
 * `qcount` — Channel 中的元素个数；
@@ -95,8 +93,6 @@ type waitq struct {
 	last  *sudog
 }
 ```
-
-Go
 
 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 表示一个在等待列表中的 Goroutine，该结构中存储了两个分别指向前后 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 的指针以构成链表。
 
@@ -124,8 +120,6 @@ func typecheck1(n *Node, top int) (res *Node) {
 }
 ```
 
-Go
-
 这一阶段会对传入 `make` 关键字的缓冲区大小进行检查，如果我们不向 `make` 传递表示缓冲区大小的参数，那么就会设置一个默认值 0，也就是当前的 Channel 不存在缓冲区。
 
 `OMAKECHAN` 类型的节点最终都会在 SSA 中间代码生成阶段之前被转换成调用 [`runtime.makechan`](https://draveness.me/golang/tree/runtime.makechan) 或者 [`runtime.makechan64`](https://draveness.me/golang/tree/runtime.makechan64) 的函数：
@@ -146,8 +140,6 @@ func walkexpr(n *Node, init *Nodes) *Node {
 	}
 }
 ```
-
-Go
 
 [`runtime.makechan`](https://draveness.me/golang/tree/runtime.makechan) 和 [`runtime.makechan64`](https://draveness.me/golang/tree/runtime.makechan64) 会根据传入的参数类型和缓冲区大小创建一个新的 Channel 结构，其中后者用于处理缓冲区大小大于 2 的 32 次方的情况，因为这在 Channel 中并不常见，所以我们重点关注 [`runtime.makechan`](https://draveness.me/golang/tree/runtime.makechan)：
 
@@ -175,8 +167,6 @@ func makechan(t *chantype, size int) *hchan {
 }
 ```
 
-Go
-
 上述代码根据 Channel 中收发元素的类型和缓冲区的大小初始化 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 和缓冲区：
 
 * 如果当前 Channel 中不存在缓冲区，那么就只会为 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 分配一段内存空间；
@@ -202,8 +192,6 @@ func walkexpr(n *Node, init *Nodes) *Node {
 }
 ```
 
-Go
-
 [`runtime.chansend1`](https://draveness.me/golang/tree/runtime.chansend1) 只是调用了 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 并传入 Channel 和需要发送的数据。[`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 是向 Channel 中发送数据时一定会调用的函数，该函数包含了发送数据的全部逻辑，如果我们在调用时将 `block` 参数设置成 `true`，那么表示当前发送操作是阻塞的：
 
 ```go
@@ -215,8 +203,6 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 		panic(plainError("send on closed channel"))
 	}
 ```
-
-Go
 
 在发送数据的逻辑执行之前会先为当前 Channel 加锁，防止多个线程并发修改数据。如果 Channel 已经关闭，那么向该 Channel 发送数据时会报 “send on closed channel” 错误并中止程序。
 
@@ -236,8 +222,6 @@ Go
 		return true
 	}
 ```
-
-Go
 
 下图展示了 Channel 中存在等待数据的 Goroutine 时，向 Channel 发送数据的过程：
 
@@ -263,8 +247,6 @@ func send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
 }
 ```
 
-Go
-
 需要注意的是，发送数据的过程只是将接收方的 Goroutine 放到了处理器的 `runnext` 中，程序没有立刻执行该 Goroutine。
 
 ### 缓冲区 [#](#%e7%bc%93%e5%86%b2%e5%8c%ba)
@@ -288,8 +270,6 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 	...
 }
 ```
-
-Go
 
 在这里我们首先会使用 [`runtime.chanbuf`](https://draveness.me/golang/tree/runtime.chanbuf) 计算出下一个可以存储数据的位置，然后通过 [`runtime.typedmemmove`](https://draveness.me/golang/tree/runtime.typedmemmove) 将发送的数据拷贝到缓冲区中并增加 `sendx` 索引和 `qcount` 计数器。
 
@@ -328,8 +308,6 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 }
 ```
 
-Go
-
 1.  调用 [`runtime.getg`](https://draveness.me/golang/tree/runtime.getg) 获取发送数据使用的 Goroutine；
 2.  执行 [`runtime.acquireSudog`](https://draveness.me/golang/tree/runtime.acquireSudog) 获取 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 结构并设置这一次阻塞发送的相关信息，例如发送的 Channel、是否在 select 中和待发送数据的内存地址等；
 3.  将刚刚创建并初始化的 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 加入发送等待队列，并设置到当前 Goroutine 的 `waiting` 上，表示 Goroutine 正在等待该 `sudog` 准备就绪；
@@ -359,8 +337,6 @@ Go
 i <- ch
 i, ok <- ch
 ```
-
-Go
 
 这两种不同的方法经过编译器的处理都会变成 `ORECV` 类型的节点，后者会在类型检查阶段被转换成 `OAS2RECV` 类型。数据的接收操作遵循以下的路线图：
 
@@ -393,8 +369,6 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 	}
 ```
 
-Go
-
 如果当前 Channel 已经被关闭并且缓冲区中不存在任何数据，那么会清除 `ep` 指针中的数据并立刻返回。
 
 除了上述两种特殊情况，使用 [`runtime.chanrecv`](https://draveness.me/golang/tree/runtime.chanrecv) 从 Channel 接收数据时还包含以下三种不同情况：
@@ -413,8 +387,6 @@ Go
 		return true, true
 	}
 ```
-
-Go
 
 [`runtime.recv`](https://draveness.me/golang/tree/runtime.recv) 的实现比较复杂：
 
@@ -438,8 +410,6 @@ func recv(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
 	goready(gp, skip+1)
 }
 ```
-
-Go
 
 该函数会根据缓冲区的大小分别处理不同的情况：
 
@@ -481,8 +451,6 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 }
 ```
 
-Go
-
 如果接收数据的内存地址不为空，那么会使用 [`runtime.typedmemmove`](https://draveness.me/golang/tree/runtime.typedmemmove) 将缓冲区中的数据拷贝到内存中、清除队列中的数据并完成收尾工作。
 
 ![channel-buffer-receive](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/channel-buffer-receive.png)
@@ -519,8 +487,6 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 	return true, !closed
 }
 ```
-
-Go
 
 在正常的接收场景中，我们会使用 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 将当前 Goroutine 包装成一个处于等待状态的 Goroutine 并将其加入到接收队列中。
 
@@ -560,8 +526,6 @@ func closechan(c *hchan) {
 	}
 ```
 
-Go
-
 处理完了这些异常的情况之后就可以开始执行关闭 Channel 的逻辑了，下面这段代码的主要工作就是将 `recvq` 和 `sendq` 两个队列中的数据加入到 Goroutine 列表 `gList` 中，与此同时该函数会清除所有 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 上未被处理的元素：
 
 ```go
@@ -593,8 +557,6 @@ Go
 	}
 }
 ```
-
-Go
 
 该函数在最后会为所有被阻塞的 Goroutine 调用 [`runtime.goready`](https://draveness.me/golang/tree/runtime.goready) 触发调度。
 

@@ -22,8 +22,6 @@ type Context interface {
 }
 ```
 
-Go
-
 [`context`](https://github.com/golang/go/tree/master/src/context) 包中提供的 [`context.Background`](https://draveness.me/golang/tree/context.Background)、[`context.TODO`](https://draveness.me/golang/tree/context.TODO)、[`context.WithDeadline`](https://draveness.me/golang/tree/context.WithDeadline) 和 [`context.WithValue`](https://draveness.me/golang/tree/context.WithValue) 函数会返回实现该接口的私有结构体，我们会在后面详细介绍它们的工作原理。
 
 ## 6.1.1 设计原理 [#](#611-%e8%ae%be%e8%ae%a1%e5%8e%9f%e7%90%86)
@@ -72,8 +70,6 @@ func handle(ctx context.Context, duration time.Duration) {
 }
 ```
 
-Go
-
 因为过期时间大于处理时间，所以我们有足够的时间处理该请求，运行上述代码会打印出下面的内容：
 
 ```go
@@ -81,8 +77,6 @@ $ go run context.go
 process request with 500ms
 main context deadline exceeded
 ```
-
-Go
 
 `handle` 函数没有进入超时的 `select` 分支，但是 `main` 函数的 `select` 却会等待 [`context.Context`](https://draveness.me/golang/tree/context.Context) 超时并打印出 `main context deadline exceeded`。
 
@@ -93,8 +87,6 @@ $ go run context.go
 main context deadline exceeded
 handle context deadline exceeded
 ```
-
-Go
 
 相信这两个例子能够帮助各位读者理解 [`context.Context`](https://draveness.me/golang/tree/context.Context) 的使用方法和设计原理 — 多个 Goroutine 同时订阅 `ctx.Done()` 管道中的消息，一旦接收到取消信号就立刻停止当前正在执行的工作。
 
@@ -111,8 +103,6 @@ func TODO() Context {
 	return todo
 }
 ```
-
-Go
 
 这两个私有变量都是通过 `new(emptyCtx)` 语句初始化的，它们是指向私有结构体 [`context.emptyCtx`](https://draveness.me/golang/tree/context.emptyCtx) 的指针，这是最简单、最常用的上下文类型：
 
@@ -135,8 +125,6 @@ func (*emptyCtx) Value(key interface{}) interface{} {
 	return nil
 }
 ```
-
-Go
 
 从上述代码中，我们不难发现 [`context.emptyCtx`](https://draveness.me/golang/tree/context.emptyCtx) 通过空方法实现了 [`context.Context`](https://draveness.me/golang/tree/context.Context) 接口中的所有方法，它没有任何功能。
 
@@ -168,8 +156,6 @@ func WithCancel(parent Context) (ctx Context, cancel CancelFunc) {
 	return &c, func() { c.cancel(true, Canceled) }
 }
 ```
-
-Go
 
 * [`context.newCancelCtx`](https://draveness.me/golang/tree/context.newCancelCtx) 将传入的上下文包装成私有结构体 [`context.cancelCtx`](https://draveness.me/golang/tree/context.cancelCtx)；
 * [`context.propagateCancel`](https://draveness.me/golang/tree/context.propagateCancel) 会构建父子上下文之间的关联，当父上下文被取消时，子上下文也会被取消：
@@ -206,8 +192,6 @@ func propagateCancel(parent Context, child canceler) {
 	}
 }
 ```
-
-Go
 
 上述函数总共与父上下文相关的三种不同的情况：
 
@@ -248,8 +232,6 @@ func (c *cancelCtx) cancel(removeFromParent bool, err error) {
 }
 ```
 
-Go
-
 除了 [`context.WithCancel`](https://draveness.me/golang/tree/context.WithCancel) 之外，[`context`](https://github.com/golang/go/tree/master/src/context) 包中的另外两个函数 [`context.WithDeadline`](https://draveness.me/golang/tree/context.WithDeadline) 和 [`context.WithTimeout`](https://draveness.me/golang/tree/context.WithTimeout) 也都能创建可以被取消的计时器上下文 [`context.timerCtx`](https://draveness.me/golang/tree/context.timerCtx)：
 
 ```go
@@ -282,8 +264,6 @@ func WithDeadline(parent Context, d time.Time) (Context, CancelFunc) {
 }
 ```
 
-Go
-
 [`context.WithDeadline`](https://draveness.me/golang/tree/context.WithDeadline) 在创建 [`context.timerCtx`](https://draveness.me/golang/tree/context.timerCtx) 的过程中判断了父上下文的截止日期与当前日期，并通过 [`time.AfterFunc`](https://draveness.me/golang/tree/time.AfterFunc) 创建定时器，当时间超过了截止日期后会调用 [`context.timerCtx.cancel`](https://draveness.me/golang/tree/context.timerCtx.cancel) 同步取消信号。
 
 [`context.timerCtx`](https://draveness.me/golang/tree/context.timerCtx) 内部不仅通过嵌入 [`context.cancelCtx`](https://draveness.me/golang/tree/context.cancelCtx) 结构体继承了相关的变量和方法，还通过持有的定时器 `timer` 和截止时间 `deadline` 实现了定时取消的功能：
@@ -314,8 +294,6 @@ func (c *timerCtx) cancel(removeFromParent bool, err error) {
 }
 ```
 
-Go
-
 [`context.timerCtx.cancel`](https://draveness.me/golang/tree/context.timerCtx.cancel) 方法不仅调用了 [`context.cancelCtx.cancel`](https://draveness.me/golang/tree/context.cancelCtx.cancel)，还会停止持有的定时器减少不必要的资源浪费。
 
 ## 6.1.4 传值方法 [#](#614-%e4%bc%a0%e5%80%bc%e6%96%b9%e6%b3%95)
@@ -334,8 +312,6 @@ func WithValue(parent Context, key, val interface{}) Context {
 }
 ```
 
-Go
-
 [`context.valueCtx`](https://draveness.me/golang/tree/context.valueCtx) 结构体会将除了 `Value` 之外的 `Err`、`Deadline` 等方法代理到父上下文中，它只会响应 [`context.valueCtx.Value`](https://draveness.me/golang/tree/context.valueCtx.Value) 方法，该方法的实现也很简单：
 
 ```go
@@ -351,8 +327,6 @@ func (c *valueCtx) Value(key interface{}) interface{} {
 	return c.Context.Value(key)
 }
 ```
-
-Go
 
 如果 [`context.valueCtx`](https://draveness.me/golang/tree/context.valueCtx) 中存储的键值对与 [`context.valueCtx.Value`](https://draveness.me/golang/tree/context.valueCtx.Value) 方法中传入的参数不匹配，就会从父上下文中查找该键对应的值直到某个父上下文中返回 `nil` 或者查找到对应的值。
 
