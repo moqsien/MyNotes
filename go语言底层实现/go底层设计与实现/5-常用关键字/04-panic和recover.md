@@ -1,6 +1,6 @@
 # 5.4 panic 和 recover [#](#54-panic-%e5%92%8c-recover)
 
-> 各位读者朋友，很高兴大家通过本博客学习 Go 语言，感谢一路相伴！《Go语言设计与实现》的纸质版图书已经上架京东，有需要的朋友请点击 [链接](https://union-click.jd.com/jdc?e=&p=JF8BAL8JK1olXDYCVlpeCEsQAl9MRANLAjZbERscSkAJHTdNTwcKBlMdBgABFksVB2wIG1wUQl9HCANtSABQA2hTHjBwD15qUVsVU01rX2oKXVcZbQcyV19eC0sTAWwPHGslXQEyAjBdCUoWAm4NH1wSbQcyVFlfDkkfBWsKGFkXWDYFVFdtfQhHRDtXTxlXbTYyV25tOEsnAF9KdV4QXw4HUAlVAU5DAmoMSQhGDgMBAVpcWEMSU2sLTlpBbQQDVVpUOA) 购买。
+```
 
 本节将分析 Go 语言中两个经常成对出现的两个关键字 — `panic` 和 `recover`。这两个关键字与上一节提到的 `defer` 有紧密的联系，它们都是 Go 语言中的内置函数，也提供了互补的功能。
 

@@ -1,6 +1,6 @@
 # 5.5 make 和 new [#](#55-make-%e5%92%8c-new)
 
-> 各位读者朋友，很高兴大家通过本博客学习 Go 语言，感谢一路相伴！《Go语言设计与实现》的纸质版图书已经上架京东，有需要的朋友请点击 [链接](https://union-click.jd.com/jdc?e=&p=JF8BAL8JK1olXDYCVlpeCEsQAl9MRANLAjZbERscSkAJHTdNTwcKBlMdBgABFksVB2wIG1wUQl9HCANtSABQA2hTHjBwD15qUVsVU01rX2oKXVcZbQcyV19eC0sTAWwPHGslXQEyAjBdCUoWAm4NH1wSbQcyVFlfDkkfBWsKGFkXWDYFVFdtfQhHRDtXTxlXbTYyV25tOEsnAF9KdV4QXw4HUAlVAU5DAmoMSQhGDgMBAVpcWEMSU2sLTlpBbQQDVVpUOA) 购买。
+```
 
 当我们想要在 Go 语言中初始化一个结构时，可能会用到两个不同的关键字 — `make` 和 `new`。因为它们的功能相似，所以初学者可能会对这两个关键字的作用感到困惑[1](#fn:1)，但是它们两者能够初始化的变量却有较大的不同。
 

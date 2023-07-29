@@ -1,6 +1,6 @@
 # 9.2 HTTP [#](#92-http)
 
-> 各位读者朋友，很高兴大家通过本博客学习 Go 语言，感谢一路相伴！《Go语言设计与实现》的纸质版图书已经上架京东，有需要的朋友请点击 [链接](https://union-click.jd.com/jdc?e=&p=JF8BAL8JK1olXDYCVlpeCEsQAl9MRANLAjZbERscSkAJHTdNTwcKBlMdBgABFksVB2wIG1wUQl9HCANtSABQA2hTHjBwD15qUVsVU01rX2oKXVcZbQcyV19eC0sTAWwPHGslXQEyAjBdCUoWAm4NH1wSbQcyVFlfDkkfBWsKGFkXWDYFVFdtfQhHRDtXTxlXbTYyV25tOEsnAF9KdV4QXw4HUAlVAU5DAmoMSQhGDgMBAVpcWEMSU2sLTlpBbQQDVVpUOA) 购买。
+```
 
 超文本传输协议（Hypertext Transfer Protocol、HTTP 协议）是今天使用最广泛的应用层协议，1989 年由 Tim Berners-Lee 在 CERN 起草的协议已经成为了互联网的数据传输的核心[1](#fn:1)。在过去几年的时间里，HTTP/2 和 HTTP/3 也对现有的协议进行了更新，提供更加安全和快速的传输功能。多数的编程语言都会在标准库中实现 HTTP/1.1 和 HTTP/2.0 已满足工程师的日常开发需求，今天要介绍的 Go 语言的网络库也实现了这两个大版本的 HTTP 协议。
 
