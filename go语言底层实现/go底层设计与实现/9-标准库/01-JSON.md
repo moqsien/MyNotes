@@ -8,7 +8,7 @@ JSON（JavaScript 对象表示，JavaScript Object Notation）作为一种轻量
 
 几乎所有的现代编程语言都会将处理 JSON 的函数直接纳入标准库，Go 语言也不例外，它通过 [`encoding/json`](https://golang.org/pkg/encoding/json/) 对外提供标准的 JSON 序列化和反序列化方法，即 [`encoding/json.Marshal`](https://draveness.me/golang/tree/encoding/json.Marshal) 和 [`encoding/json.Unmarshal`](https://draveness.me/golang/tree/encoding/json.Unmarshal)，它们也是包中最常用的两个方法。
 
-![json-marshal-and-unmarshal](https://img.draveness.me/2020-04-25-15878293719232-json-marshal-and-unmarshal.png)
+![json-marshal-and-unmarshal](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/json-marshal-and-unmarshal.png)
 
 **图 9-1 序列化和反序列化**
 
@@ -52,7 +52,7 @@ Go
 
 Go 语言的结构体标签也是一个比较有趣的功能，在默认情况下，当我们在序列化和反序列化结构体时，标准库都会认为字段名和 JSON 中的键具有一一对应的关系，然而 Go 语言的字段一般都是驼峰命名法，JSON 中下划线的命名方式相对比较常见，所以使用标签这一特性直接建立键与字段之间的映射关系是一个非常方便的设计。
 
-![struct-and-json](https://img.draveness.me/2020-04-25-15878293719272-struct-and-json.png)
+![struct-and-json](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/struct-and-json.png)
 
 **图 9-2 结构体与 JSON 的映射**
 
@@ -103,7 +103,7 @@ Go
 
 上述方法会调用 [`encoding/json.newEncodeState`](https://draveness.me/golang/tree/encoding/json.newEncodeState) 从全局的编码状态池中获取 [`encoding/json.encodeState`](https://draveness.me/golang/tree/encoding/json.encodeState)，随后的序列化过程都会使用这个编码状态，该结构体也会在编码结束后被重新放回池中以便重复利用。
 
-![json-marshal-call-stack](https://img.draveness.me/2020-04-25-15878293719298-json-marshal-call-stack.png)
+![json-marshal-call-stack](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/json-marshal-call-stack.png)
 
 **图 9-3 序列化调用栈**
 
@@ -251,7 +251,7 @@ Go
 
 数组以及指针等编码器的实现原理与该方法也没有太多的区别，它们都会使用类似的策略递归地调用持有字段的编码方法，这也就能形成一个如下图所示的树形结构：
 
-![struct-encoder](https://img.draveness.me/2020-04-25-15878293719308-struct-encoder.png)
+![struct-encoder](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/struct-encoder.png)
 
 **图 9-4 序列化与树形结构体**
 

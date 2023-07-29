@@ -134,7 +134,7 @@ Go
 
 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 结构体是延迟调用链表上的一个元素，所有的结构体都会通过 `link` 字段串联成链表。
 
-![golang-defer-link](https://img.draveness.me/2020-01-19-15794017184603-golang-defer-link.png)
+![golang-defer-link](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-defer-link.png)
 
 **图 5-10 延迟调用链表**
 
@@ -311,7 +311,7 @@ Go
 
 无论使用哪种方式，只要获取到 [`runtime._defer`](https://draveness.me/golang/tree/runtime._defer) 结构体，它都会被追加到所在 Goroutine `_defer` 链表的最前面。
 
-![golang-new-defer](https://img.draveness.me/2020-01-19-15794017184614-golang-new-defer.png)
+![golang-new-defer](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-new-defer.png)
 
 **图 5-11 追加新的延迟调用**
 
@@ -513,7 +513,7 @@ Go
 
 延迟比特中的每一个比特位都表示该位对应的 `defer` 关键字是否需要被执行，如下图所示，其中 8 个比特的倒数第二个比特在函数返回前被设置成了 1，那么该比特位对应的函数会在函数返回前执行：
 
-![golang-defer-bits](https://img.draveness.me/2020-10-31-16041438704362/golang-defer-bits.png)
+![golang-defer-bits](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-defer-bits.png)
 
 **图 5-12 延迟比特**
 

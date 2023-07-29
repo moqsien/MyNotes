@@ -4,7 +4,7 @@
 
 本节将分析 Go 语言中两个经常成对出现的两个关键字 — `panic` 和 `recover`。这两个关键字与上一节提到的 `defer` 有紧密的联系，它们都是 Go 语言中的内置函数，也提供了互补的功能。
 
-![golang-panic](https://img.draveness.me/2020-01-19-15794253208982-golang-panic.png)
+![golang-panic](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-panic.png)
 
 **图 5-12 panic 触发的递归延迟调用**
 
@@ -46,7 +46,7 @@ Go
 
 前面我们曾经介绍过 `defer` 关键字对应的 [`runtime.deferproc`](https://draveness.me/golang/tree/runtime.deferproc) 会将延迟调用函数与调用方所在 Goroutine 进行关联。所以当程序发生崩溃时只会调用当前 Goroutine 的延迟调用函数也是非常合理的。
 
-![golang-panic-and-defers](https://img.draveness.me/2020-01-19-15794253176199-golang-panic-and-defers.png)
+![golang-panic-and-defers](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-panic-and-defers.png)
 
 **图 5-13 panic 触发当前 Goroutine 的延迟调用**
 

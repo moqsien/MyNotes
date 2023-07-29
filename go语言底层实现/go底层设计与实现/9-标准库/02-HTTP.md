@@ -8,7 +8,7 @@
 
 HTTP 协议是应用层协议，在通常情况下我们都会使用 TCP 作为底层的传输层协议传输数据包，但是 HTTP/3 在 UDP 协议上实现了新的传输层协议 QUIC 并使用 QUIC 传输数据，这也意味着 HTTP 既可以跑在 TCP 上，也可以跑在 UDP 上。
 
-![http-and-transport-layer](https://img.draveness.me/2020-05-18-15897352888395-http-and-transport-layer.png)
+![http-and-transport-layer](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/http-and-transport-layer.png)
 
 **图 9-5 HTTP 与传输层协议**
 
@@ -18,7 +18,7 @@ Go 语言标准库通过 [`net/http`](https://golang.org/pkg/net/http/) 包提�
 
 HTTP 协议中最常见的概念是 HTTP 请求与响应，我们可以将它们理解成客户端和服务端之间传递的消息，客户端向服务端发送 HTTP 请求，服务端收到 HTTP 请求后会做出计算后以 HTTP 响应的形式发送给客户端。
 
-![http-request-and-response](https://img.draveness.me/2020-05-18-15897352888407-http-request-and-response.png)
+![http-request-and-response](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/http-request-and-response.png)
 
 **图 9-6 HTTP 请求与响应**
 
@@ -46,7 +46,7 @@ HTTP 响应也有着比较类似的结构，其中也包含响应的协议版本
 
 HTTP 协议目前主要还是跑在 TCP 协议上的，TCP 协议是面向连接的、可靠的、基于字节流的传输层通信协议[2](#fn:2)，应用层交给 TCP 协议的数据并不会以消息为单位向目的主机传输，这些数据在某些情况下会被组合成一个数据段发送给目标的主机[3](#fn:3)。因为 TCP 协议是基于字节流的，所以基于 TCP 协议的应用层协议都需要自己划分消息的边界。
 
-![message-framing](https://img.draveness.me/2020-05-18-15897352888414-message-framing.png)
+![message-framing](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/message-framing.png)
 
 **图 9-7 实现消息边界的方法**
 
@@ -103,7 +103,7 @@ Go
 
 客户端和服务端面对的都是双向的 HTTP 请求与响应，客户端构建请求并等待响应，服务端处理请求并返回响应。HTTP 请求和响应在标准库中不止有一种实现，它们都包含了层级结构，标准库中的 [`net/http.RoundTripper`](https://draveness.me/golang/tree/net/http.RoundTripper) 包含如下所示的层级结构：
 
-![golang-roundtripper](https://img.draveness.me/2020-05-18-15897352888419-golang-roundtripper.png)
+![golang-roundtripper](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-roundtripper.png)
 
 **图 9-8 HTTP 标准库的层级结构**
 
@@ -113,7 +113,7 @@ Go
 
 客户端可以直接通过 [`net/http.Get`](https://draveness.me/golang/tree/net/http.Get) 使用默认的客户端 [`net/http.DefaultClient`](https://draveness.me/golang/tree/net/http.DefaultClient) 发起 HTTP 请求，也可以自己构建新的 [`net/http.Client`](https://draveness.me/golang/tree/net/http.Client) 实现自定义的 HTTP 事务，在多数情况下使用默认的客户端都能满足我们的需求，不过需要注意的是使用默认客户端发出的请求没有超时时间，所以在某些场景下会一直等待下去。除了自定义 HTTP 事务之外，我们还可以实现自定义的 [`net/http.CookieJar`](https://draveness.me/golang/tree/net/http.CookieJar) 接口管理和使用 HTTP 请求中的 Cookie：
 
-![http-transaction-and-cookie](https://img.draveness.me/2020-05-18-15897352888425-http-transaction-and-cookie.png)
+![http-transaction-and-cookie](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/http-transaction-and-cookie.png)
 
 **图 9-9 事务和 Cookie**
 
@@ -123,7 +123,7 @@ Go
 2.  调用 [`net/http.Transport.RoundTrip`](https://draveness.me/golang/tree/net/http.Transport.RoundTrip) 开启 HTTP 事务、获取连接并发送请求；
 3.  在 HTTP 持久连接的 [`net/http.persistConn.readLoop`](https://draveness.me/golang/tree/net/http.persistConn.readLoop) 方法中等待响应；
 
-![http-client-transport-conns](https://img.draveness.me/2020-05-18-15897352888431-http-client-transport-conns.png)
+![http-client-transport-conns](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/http-client-transport-conns.png)
 
 **图 9-10 客户端的几大结构体**
 
@@ -459,7 +459,7 @@ Go
 
 HTTP 服务是由一组实现了 [`net/http.Handler`](https://draveness.me/golang/tree/net/http.Handler) 接口的处理器组成的，处理 HTTP 请求时会根据请求的路由选择合适的处理器：
 
-![http-server-and-handlers](https://img.draveness.me/2020-05-18-15897352888438-http-server-and-handlers.png)
+![http-server-and-handlers](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/http-server-and-handlers.png)
 
 **图 9-11 HTTP 服务与处理器**
 

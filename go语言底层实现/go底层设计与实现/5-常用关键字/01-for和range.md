@@ -234,7 +234,7 @@ Go
 
 一个常见的 for 循环代码会被 [`cmd/compile/internal/gc.state.stmt`](https://draveness.me/golang/tree/cmd/compile/internal/gc.state.stmt) 转换成下面的控制结构，该结构中包含了 4 个不同的块，这些代码块之间的连接表示汇编语言中的跳转关系，与我们理解的 for 循环控制结构没有太多的差别。
 
-![golang-for-loop-ssa](https://img.draveness.me/2020-01-17-15792766877627-golang-for-loop-ssa.png)
+![golang-for-loop-ssa](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-for-loop-ssa.png)
 
 **图 5-1 Go 语言循环生成的 SSA 代码**
 
@@ -244,7 +244,7 @@ Go
 
 与简单的经典循环相比，范围循环在 Go 语言中更常见、实现也更复杂。这种循环同时使用 `for` 和 `range` 两个关键字，编译器会在编译期间将所有 for-range 循环变成经典循环。从编译器的视角来看，就是将 `ORANGE` 类型的节点转换成 `OFOR` 节点:
 
-![Golang-For-Range-Loop](https://img.draveness.me/2020-01-17-15792766926441-Golang-For-Range-Loop.png)
+![Golang-For-Range-Loop](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/Golang-For-Range-Loop.png)
 
 **图 5-2 范围循环、普通循环和 SSA**
 
@@ -430,7 +430,7 @@ Go
 
 上述代码是展开 `for key, val := range hash {}` 后的结果，在 [`cmd/compile/internal/gc.walkrange`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkrange) 处理 `TMAP` 节点时，编译器会根据 range 返回值的数量在循环体中插入需要的赋值语句：
 
-![golang-range-map](https://img.draveness.me/2020-01-17-15792766877639-golang-range-map.png)
+![golang-range-map](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-range-map.png)
 
 **图 5-3 不同方式遍历哈希插入的语句**
 
@@ -520,7 +520,7 @@ Go
 
 当上述函数已经遍历了正常桶后，会通过 [`runtime.bmap.overflow`](https://draveness.me/golang/tree/runtime.bmap.overflow) 遍历哈希中的溢出桶。
 
-![golang-range-map-and-buckets](https://img.draveness.me/2020-01-17-15792766877646-golang-range-map-and-buckets.png)
+![golang-range-map-and-buckets](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-range-map-and-buckets.png)
 
 **图 5-4 哈希表的遍历过程**
 

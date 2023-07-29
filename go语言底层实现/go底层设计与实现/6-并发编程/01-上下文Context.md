@@ -32,19 +32,19 @@ Go
 
 如下图所示，我们可能会创建多个 Goroutine 来处理一次请求，而 [`context.Context`](https://draveness.me/golang/tree/context.Context) 的作用是在不同 Goroutine 之间同步请求特定数据、取消信号以及处理请求的截止日期。
 
-![golang-context-usage](https://img.draveness.me/golang-context-usage.png)
+![golang-context-usage](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-context-usage.png)
 
 **图 6-1 Context 与 Goroutine 树**
 
 每一个 [`context.Context`](https://draveness.me/golang/tree/context.Context) 都会从最顶层的 Goroutine 一层一层传递到最下层。[`context.Context`](https://draveness.me/golang/tree/context.Context) 可以在上层 Goroutine 执行出现错误时，将信号及时同步给下层。
 
-![golang-without-context](https://img.draveness.me/golang-without-context.png)
+![golang-without-context](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-without-context.png)
 
 **图 6-2 不使用 Context 同步信号**
 
 如上图所示，当最上层的 Goroutine 因为某些原因执行失败时，下层的 Goroutine 由于没有接收到这个信号所以会继续工作；但是当我们正确地使用 [`context.Context`](https://draveness.me/golang/tree/context.Context) 时，就可以在下层及时停掉无用的工作以减少额外资源的消耗：
 
-![golang-with-context](https://img.draveness.me/golang-with-context.png)
+![golang-with-context](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-with-context.png)
 
 **图 6-3 使用 Context 同步信号**
 
@@ -140,7 +140,7 @@ Go
 
 从上述代码中，我们不难发现 [`context.emptyCtx`](https://draveness.me/golang/tree/context.emptyCtx) 通过空方法实现了 [`context.Context`](https://draveness.me/golang/tree/context.Context) 接口中的所有方法，它没有任何功能。
 
-![golang-context-hierarchy](https://img.draveness.me/golang-context-hierarchy.png)
+![golang-context-hierarchy](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-context-hierarchy.png)
 
 **图 6-4 Context 层级关系**
 
@@ -155,7 +155,7 @@ Go
 
 [`context.WithCancel`](https://draveness.me/golang/tree/context.WithCancel) 函数能够从 [`context.Context`](https://draveness.me/golang/tree/context.Context) 中衍生出一个新的子上下文并返回用于取消该上下文的函数。一旦我们执行返回的取消函数，当前上下文以及它的子上下文都会被取消，所有的 Goroutine 都会同步收到这一取消信号。
 
-![golang-parent-cancel-context](https://img.draveness.me/2020-01-20-15795072700927-golang-parent-cancel-context.png)
+![golang-parent-cancel-context](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-parent-cancel-context.png)
 
 **图 6-5 Context 子树的取消**
 

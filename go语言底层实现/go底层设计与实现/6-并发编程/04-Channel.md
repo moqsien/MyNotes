@@ -8,13 +8,13 @@
 
 Go 语言中最常见的、也是经常被人提及的设计模式就是：不要通过共享内存的方式进行通信，而是应该通过通信的方式共享内存。在很多主流的编程语言中，多个线程传递数据的方式一般都是共享内存，为了解决线程竞争，我们需要限制同一时间能够读写这些变量的线程数量，然而这与 Go 语言鼓励的设计并不相同。
 
-![shared-memory](https://img.draveness.me/2020-01-28-15802171487042-shared-memory.png)
+![shared-memory](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/shared-memory.png)
 
 **图 6-17 多线程使用共享内存传递数据**
 
 虽然我们在 Go 语言中也能使用共享内存加互斥锁进行通信，但是 Go 语言提供了一种不同的并发模型，即通信顺序进程（Communicating sequential processes，CSP）[1](#fn:1)。Goroutine 和 Channel 分别对应 CSP 中的实体和传递信息的媒介，Goroutine 之间会通过 Channel 传递数据。
 
-![channel-and-goroutines](https://img.draveness.me/2020-01-28-15802171487080-channel-and-goroutines.png)
+![channel-and-goroutines](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/channel-and-goroutines.png)
 
 **图 6-18 Goroutine 使用 Channel 传递数据**
 
@@ -38,7 +38,7 @@ Go 语言中最常见的、也是经常被人提及的设计模式就是：不�
 
 锁是一种常见的并发控制技术，我们一般会将锁分成乐观锁和悲观锁，即乐观并发控制和悲观并发控制，无锁（lock-free）队列更准确的描述是使用乐观并发控制的队列。乐观并发控制也叫乐观锁，很多人都会误以为乐观锁是与悲观锁差不多，然而它并不是真正的锁，只是一种并发控制的思想[5](#fn:5)。
 
-![concurrency-control](https://img.draveness.me/2020-01-28-15802171487089-concurrency-control.png)
+![concurrency-control](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/concurrency-control.png)
 
 **图 6-19 悲观并发控制与乐观并发控制**
 
@@ -241,7 +241,7 @@ Go
 
 下图展示了 Channel 中存在等待数据的 Goroutine 时，向 Channel 发送数据的过程：
 
-![channel-direct-send](https://img.draveness.me/2020-01-29-15802354027250-channel-direct-send.png)
+![channel-direct-send](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/channel-direct-send.png)
 
 **图 6-20 直接发送数据的过程**
 
@@ -293,7 +293,7 @@ Go
 
 在这里我们首先会使用 [`runtime.chanbuf`](https://draveness.me/golang/tree/runtime.chanbuf) 计算出下一个可以存储数据的位置，然后通过 [`runtime.typedmemmove`](https://draveness.me/golang/tree/runtime.typedmemmove) 将发送的数据拷贝到缓冲区中并增加 `sendx` 索引和 `qcount` 计数器。
 
-![channel-buffer-send](https://img.draveness.me/2020-01-28-15802171487104-channel-buffer-send.png)
+![channel-buffer-send](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/channel-buffer-send.png)
 
 **图 6-21 向缓冲区写入数据**
 
@@ -364,7 +364,7 @@ Go
 
 这两种不同的方法经过编译器的处理都会变成 `ORECV` 类型的节点，后者会在类型检查阶段被转换成 `OAS2RECV` 类型。数据的接收操作遵循以下的路线图：
 
-![channel-receive-node](https://img.draveness.me/2020-01-28-15802171487111-channel-receive-node.png)
+![channel-receive-node](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/channel-receive-node.png)
 
 **图 6-22 Channel 接收操作的路线图**
 
@@ -451,7 +451,7 @@ Go
 
 无论发生哪种情况，运行时都会调用 [`runtime.goready`](https://draveness.me/golang/tree/runtime.goready) 将当前处理器的 `runnext` 设置成发送数据的 Goroutine，在调度器下一次调度时将阻塞的发送方唤醒。
 
-![channel-receive-from-sendq](https://img.draveness.me/2020-01-28-15802171487118-channel-receive-from-sendq.png)
+![channel-receive-from-sendq](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/channel-receive-from-sendq.png)
 
 **图 6-23 从发送队列中获取数据**
 
@@ -485,7 +485,7 @@ Go
 
 如果接收数据的内存地址不为空，那么会使用 [`runtime.typedmemmove`](https://draveness.me/golang/tree/runtime.typedmemmove) 将缓冲区中的数据拷贝到内存中、清除队列中的数据并完成收尾工作。
 
-![channel-buffer-receive](https://img.draveness.me/2020-01-28-15802171487125-channel-buffer-receive.png)
+![channel-buffer-receive](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/channel-buffer-receive.png)
 
 **图 6-24 从缓冲区中接接收数据**
 

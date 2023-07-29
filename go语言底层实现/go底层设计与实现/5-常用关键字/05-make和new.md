@@ -34,7 +34,7 @@ Go
 
 上述代码片段中的两种不同初始化方法是等价的，它们都会创建一个指向 `int` 零值的指针。
 
-![golang-make-and-new](https://img.draveness.me/golang-make-and-new.png)
+![golang-make-and-new](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-make-and-new.png)
 
 **图 5-14 make 和 new 初始化的类型**
 
@@ -44,7 +44,7 @@ Go
 
 在前面的章节中我们已经谈到过 `make` 在创建切片、哈希表和 Channel 的具体过程，所以在这一小节，我们只是会简单提及 `make` 相关的数据结构的初始化原理。
 
-![golang-make-typecheck](https://img.draveness.me/golang-make-typecheck.png)
+![golang-make-typecheck](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-make-typecheck.png)
 
 **图 5-15 make 关键字的类型检查**
 

@@ -6,7 +6,7 @@
 
 C 语言的 `select` 系统调用可以同时监听多个文件描述符的可读或者可写的状态，Go 语言中的 `select` 也能够让 Goroutine 同时等待多个 Channel 可读或者可写，在多个文件或者 Channel状态改变之前，`select` 会一直阻塞当前线程或者 Goroutine。
 
-![Golang-Select-Channels](https://img.draveness.me/2020-01-19-15794018429532-Golang-Select-Channels.png)
+![Golang-Select-Channels](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/Golang-Select-Channels.png)
 
 **图 5-5 Select 和 Channel**
 
@@ -159,7 +159,7 @@ Go
 
 `select` 语句在编译期间会被转换成 `OSELECT` 节点。每个 `OSELECT` 节点都会持有一组 `OCASE` 节点，如果 `OCASE` 的执行条件是空，那就意味着这是一个 `default` 节点。
 
-![golang-oselect-and-ocases](https://img.draveness.me/2020-01-18-15793463657473-golang-oselect-and-ocases.png)
+![golang-oselect-and-ocases](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-oselect-and-ocases.png)
 
 **图 5-7 OSELECT 和多个 OCASE**
 
@@ -424,7 +424,7 @@ Go
 4.  当 `select` 语句中包含 `default` 时；
     * 表示前面的所有 `case` 都没有被执行，这里会解锁所有 Channel 并返回，意味着当前 `select` 结构中的收发都是非阻塞的；
 
-![golang-runtime-selectgo](https://img.draveness.me/2020-01-18-15793463657488-golang-runtime-selectgo.png)
+![golang-runtime-selectgo](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/golang-runtime-selectgo.png)
 
 **图 5-8 运行时 selectgo 函数**
 
@@ -459,7 +459,7 @@ Go
 
 除了将当前 Goroutine 对应的 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 结构体加入队列之外，这些结构体都会被串成链表附着在 Goroutine 上。在入队之后会调用 [`runtime.gopark`](https://draveness.me/golang/tree/runtime.gopark) 挂起当前 Goroutine 等待调度器的唤醒。
 
-![Golang-Select-Waiting](https://img.draveness.me/2020-01-19-15794018429558-Golang-Select-Waiting.png)
+![Golang-Select-Waiting](https://gitlab.com/moqsien/go-design-implementation/-/raw/main/Golang-Select-Waiting.png)
 
 **图 5-9 Goroutine 上等待收发的 sudog 链表**
 
