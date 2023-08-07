@@ -1,6 +1,4 @@
-# 6.1 上下文 Context [#](#61-%e4%b8%8a%e4%b8%8b%e6%96%87-context)
-
-```
+# 6.1 上下文 Context
 
 上下文 [`context.Context`](https://draveness.me/golang/tree/context.Context) Go 语言中用来设置截止日期、同步信号，传递请求相关值的结构体。上下文与 Goroutine 有比较密切的关系，是 Go 语言中独特的设计，在其他编程语言中我们很少见到类似的概念。
 
@@ -24,7 +22,7 @@ type Context interface {
 
 [`context`](https://github.com/golang/go/tree/master/src/context) 包中提供的 [`context.Background`](https://draveness.me/golang/tree/context.Background)、[`context.TODO`](https://draveness.me/golang/tree/context.TODO)、[`context.WithDeadline`](https://draveness.me/golang/tree/context.WithDeadline) 和 [`context.WithValue`](https://draveness.me/golang/tree/context.WithValue) 函数会返回实现该接口的私有结构体，我们会在后面详细介绍它们的工作原理。
 
-## 6.1.1 设计原理 [#](#611-%e8%ae%be%e8%ae%a1%e5%8e%9f%e7%90%86)
+## 6.1.1 设计原理
 
 在 Goroutine 构成的树形结构中对信号进行同步以减少计算资源的浪费是 [`context.Context`](https://draveness.me/golang/tree/context.Context) 的最大作用。Go 服务的每一个请求都是通过单独的 Goroutine 处理的[2](#fn:2)，HTTP/RPC 请求的处理器会启动新的 Goroutine 访问数据库和其他服务。
 
@@ -90,7 +88,7 @@ handle context deadline exceeded
 
 相信这两个例子能够帮助各位读者理解 [`context.Context`](https://draveness.me/golang/tree/context.Context) 的使用方法和设计原理 — 多个 Goroutine 同时订阅 `ctx.Done()` 管道中的消息，一旦接收到取消信号就立刻停止当前正在执行的工作。
 
-## 6.1.2 默认上下文 [#](#612-%e9%bb%98%e8%ae%a4%e4%b8%8a%e4%b8%8b%e6%96%87)
+## 6.1.2 默认上下文
 
 [`context`](https://github.com/golang/go/tree/master/src/context) 包中最常用的方法还是 [`context.Background`](https://draveness.me/golang/tree/context.Background)、[`context.TODO`](https://draveness.me/golang/tree/context.TODO)，这两个方法都会返回预先初始化好的私有变量 `background` 和 `todo`，它们会在同一个 Go 程序中被复用：
 
@@ -139,7 +137,7 @@ func (*emptyCtx) Value(key interface{}) interface{} {
 
 在多数情况下，如果当前函数没有上下文作为入参，我们都会使用 [`context.Background`](https://draveness.me/golang/tree/context.Background) 作为起始的上下文向下传递。
 
-## 6.1.3 取消信号 [#](#613-%e5%8f%96%e6%b6%88%e4%bf%a1%e5%8f%b7)
+## 6.1.3 取消信号
 
 [`context.WithCancel`](https://draveness.me/golang/tree/context.WithCancel) 函数能够从 [`context.Context`](https://draveness.me/golang/tree/context.Context) 中衍生出一个新的子上下文并返回用于取消该上下文的函数。一旦我们执行返回的取消函数，当前上下文以及它的子上下文都会被取消，所有的 Goroutine 都会同步收到这一取消信号。
 
@@ -296,7 +294,7 @@ func (c *timerCtx) cancel(removeFromParent bool, err error) {
 
 [`context.timerCtx.cancel`](https://draveness.me/golang/tree/context.timerCtx.cancel) 方法不仅调用了 [`context.cancelCtx.cancel`](https://draveness.me/golang/tree/context.cancelCtx.cancel)，还会停止持有的定时器减少不必要的资源浪费。
 
-## 6.1.4 传值方法 [#](#614-%e4%bc%a0%e5%80%bc%e6%96%b9%e6%b3%95)
+## 6.1.4 传值方法
 
 在最后我们需要了解如何使用上下文传值，[`context`](https://github.com/golang/go/tree/master/src/context) 包中的 [`context.WithValue`](https://draveness.me/golang/tree/context.WithValue) 能从父上下文中创建一个子上下文，传值的子上下文使用 [`context.valueCtx`](https://draveness.me/golang/tree/context.valueCtx) 类型：
 
@@ -330,13 +328,13 @@ func (c *valueCtx) Value(key interface{}) interface{} {
 
 如果 [`context.valueCtx`](https://draveness.me/golang/tree/context.valueCtx) 中存储的键值对与 [`context.valueCtx.Value`](https://draveness.me/golang/tree/context.valueCtx.Value) 方法中传入的参数不匹配，就会从父上下文中查找该键对应的值直到某个父上下文中返回 `nil` 或者查找到对应的值。
 
-## 6.1.5 小结 [#](#615-%e5%b0%8f%e7%bb%93)
+## 6.1.5 小结
 
 Go 语言中的 [`context.Context`](https://draveness.me/golang/tree/context.Context) 的主要作用还是在多个 Goroutine 组成的树中同步取消信号以减少对资源的消耗和占用，虽然它也有传值的功能，但是这个功能我们还是很少用到。
 
 在真正使用传值的功能时我们也应该非常谨慎，使用 [`context.Context`](https://draveness.me/golang/tree/context.Context) 传递请求的所有参数一种非常差的设计，比较常见的使用场景是传递请求对应用户的认证令牌以及用于进行分布式追踪的请求 ID。
 
-## 6.1.6 延伸阅读 [#](#616-%e5%bb%b6%e4%bc%b8%e9%98%85%e8%af%bb)
+## 6.1.6 延伸阅读
 
 * [Package context · Golang](https://golang.org/pkg/context/)
 * [Go Concurrency Patterns: Context](https://blog.golang.org/context)

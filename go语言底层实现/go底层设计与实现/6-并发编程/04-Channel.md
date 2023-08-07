@@ -1,10 +1,8 @@
-# 6.4 Channel [#](#64-channel)
-
-```
+# 6.4 Channel
 
 作为 Go 核心的数据结构和 Goroutine 之间的通信方式，Channel 是支撑 Go 语言高性能并发编程模型的重要结构本节会介绍管道 Channel 的设计原理、数据结构和常见操作，例如 Channel 的创建、发送、接收和关闭。虽然 Channel 与关键字 `range` 和 `select` 的关系紧密，但是因为在前面的两节中已经分析了 Channel 在不同的控制结构中组合使用时的现象，所以这里也就不会再次介绍了。
 
-## 6.4.1 设计原理 [#](#641-%e8%ae%be%e8%ae%a1%e5%8e%9f%e7%90%86)
+## 6.4.1 设计原理
 
 Go 语言中最常见的、也是经常被人提及的设计模式就是：不要通过共享内存的方式进行通信，而是应该通过通信的方式共享内存。在很多主流的编程语言中，多个线程传递数据的方式一般都是共享内存，为了解决线程竞争，我们需要限制同一时间能够读写这些变量的线程数量，然而这与 Go 语言鼓励的设计并不相同。
 
@@ -20,7 +18,7 @@ Go 语言中最常见的、也是经常被人提及的设计模式就是：不�
 
 上图中的两个 Goroutine，一个会向 Channel 中发送数据，另一个会从 Channel 中接收数据，它们两者能够独立运行并不存在直接关联，但是能通过 Channel 间接完成通信。
 
-### 先入先出 [#](#%e5%85%88%e5%85%a5%e5%85%88%e5%87%ba)
+### 先入先出
 
 目前的 Channel 收发操作均遵循了先进先出的设计，具体规则如下：
 
@@ -34,7 +32,7 @@ Go 语言中最常见的、也是经常被人提及的设计模式就是：不�
 
 这种基于重试的机制会导致 Channel 的处理不会遵循先进先出的原则。经过 [runtime: simplify buffered channels](https://github.com/golang/go/commit/8e496f1d6923172291658f0a785bdb47cc152325) 和 [runtime: simplify chan ops, take 2](https://github.com/golang/go/commit/e410a527b208e0a9acd0cded3775b302d8f2b00a) 两个提交的修改，带缓冲区和不带缓冲区的 Channel 都会遵循先入先出发送和接收数据[3](#fn:3) [4](#fn:4)。
 
-### 无锁管道 [#](#%e6%97%a0%e9%94%81%e7%ae%a1%e9%81%93)
+### 无锁管道
 
 锁是一种常见的并发控制技术，我们一般会将锁分成乐观锁和悲观锁，即乐观并发控制和悲观并发控制，无锁（lock-free）队列更准确的描述是使用乐观并发控制的队列。乐观并发控制也叫乐观锁，很多人都会误以为乐观锁是与悲观锁差不多，然而它并不是真正的锁，只是一种并发控制的思想[5](#fn:5)。
 
@@ -56,7 +54,7 @@ Channel 在运行时的内部表示是 [`runtime.hchan`](https://draveness.me/go
 
 因为目前通过 CAS 实现[11](#fn:11)的无锁 Channel 没有提供先进先出的特性，所以该提案暂时也被搁浅了[12](#fn:12)。
 
-## 6.4.2 数据结构 [#](#642-%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84)
+## 6.4.2 数据结构
 
 Go 语言的 Channel 在运行时使用 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 结构体表示。我们在 Go 语言中创建新的 Channel 时，实际上创建的都是如下所示的结构：
 
@@ -96,7 +94,7 @@ type waitq struct {
 
 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 表示一个在等待列表中的 Goroutine，该结构中存储了两个分别指向前后 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 的指针以构成链表。
 
-## 6.4.3 创建管道 [#](#643-%e5%88%9b%e5%bb%ba%e7%ae%a1%e9%81%93)
+## 6.4.3 创建管道
 
 Go 语言中所有 Channel 的创建都会使用 `make` 关键字。编译器会将 `make(chan int, 10)` 表达式转换成 `OMAKE` 类型的节点，并在类型检查阶段将 `OMAKE` 类型的节点转换成 `OMAKECHAN` 类型：
 
@@ -175,7 +173,7 @@ func makechan(t *chantype, size int) *hchan {
 
 在函数的最后会统一更新 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 的 `elemsize`、`elemtype` 和 `dataqsiz` 几个字段。
 
-## 6.4.4 发送数据 [#](#644-%e5%8f%91%e9%80%81%e6%95%b0%e6%8d%ae)
+## 6.4.4 发送数据
 
 当我们想要向 Channel 发送数据时，就需要使用 `ch <- i` 语句，编译器会将它解析成 `OSEND` 节点并在 [`cmd/compile/internal/gc.walkexpr`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkexpr) 中转换成 [`runtime.chansend1`](https://draveness.me/golang/tree/runtime.chansend1)：
 
@@ -212,7 +210,7 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 * 当缓冲区存在空余空间时，将发送的数据写入 Channel 的缓冲区；
 * 当不存在缓冲区或者缓冲区已满时，等待其他 Goroutine 从 Channel 接收数据；
 
-### 直接发送 [#](#%e7%9b%b4%e6%8e%a5%e5%8f%91%e9%80%81)
+### 直接发送
 
 如果目标 Channel 没有被关闭并且已经有处于读等待的 Goroutine，那么 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 会从接收队列 `recvq` 中取出最先陷入等待的 Goroutine 并直接向它发送数据：
 
@@ -249,7 +247,7 @@ func send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
 
 需要注意的是，发送数据的过程只是将接收方的 Goroutine 放到了处理器的 `runnext` 中，程序没有立刻执行该 Goroutine。
 
-### 缓冲区 [#](#%e7%bc%93%e5%86%b2%e5%8c%ba)
+### 缓冲区
 
 如果创建的 Channel 包含缓冲区并且 Channel 中的数据没有装满，会执行下面这段代码：
 
@@ -279,7 +277,7 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 
 如果当前 Channel 的缓冲区未满，向 Channel 发送的数据会存储在 Channel 的 `sendx` 索引所在的位置并将 `sendx` 索引加一。因为这里的 `buf` 是一个循环数组，所以当 `sendx` 等于 `dataqsiz` 时会重新回到数组开始的位置。
 
-### 阻塞发送 [#](#%e9%98%bb%e5%a1%9e%e5%8f%91%e9%80%81)
+### 阻塞发送
 
 当 Channel 没有接收者能够处理数据时，向 Channel 发送数据会被下游阻塞，当然使用 `select` 关键字可以向 Channel 非阻塞地发送消息。向 Channel 阻塞地发送数据会执行下面的代码，我们可以简单梳理一下这段代码的逻辑：
 
@@ -316,7 +314,7 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 
 函数在最后会返回 `true` 表示这次我们已经成功向 Channel 发送了数据。
 
-### 小结 [#](#%e5%b0%8f%e7%bb%93)
+### 小结
 
 我们在这里可以简单梳理和总结一下使用 `ch <- i` 表达式向 Channel 发送数据时遇到的几种情况：
 
@@ -329,7 +327,7 @@ func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
 1.  发送数据时发现 Channel 上存在等待接收数据的 Goroutine，立刻设置处理器的 `runnext` 属性，但是并不会立刻触发调度；
 2.  发送数据时并没有找到接收方并且缓冲区已经满了，这时会将自己加入 Channel 的 `sendq` 队列并调用 [`runtime.goparkunlock`](https://draveness.me/golang/tree/runtime.goparkunlock) 触发 Goroutine 的调度让出处理器的使用权；
 
-## 6.4.5 接收数据 [#](#645-%e6%8e%a5%e6%94%b6%e6%95%b0%e6%8d%ae)
+## 6.4.5 接收数据
 
 我们接下来继续介绍 Channel 操作的另一方：接收数据。Go 语言中可以使用两种不同的方式去接收 Channel 中的数据：
 
@@ -377,7 +375,7 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 * 当缓冲区存在数据时，从 Channel 的缓冲区中接收数据；
 * 当缓冲区中不存在数据时，等待其他 Goroutine 向 Channel 发送数据；
 
-### 直接接收 [#](#%e7%9b%b4%e6%8e%a5%e6%8e%a5%e6%94%b6)
+### 直接接收
 
 当 Channel 的 `sendq` 队列中包含处于等待状态的 Goroutine 时，该函数会取出队列头等待的 Goroutine，处理的逻辑和发送时相差无几，只是发送数据时调用的是 [`runtime.send`](https://draveness.me/golang/tree/runtime.send) 函数，而接收数据时使用 [`runtime.recv`](https://draveness.me/golang/tree/runtime.recv)：
 
@@ -427,7 +425,7 @@ func recv(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) {
 
 上图展示了 Channel 在缓冲区已经没有空间并且发送队列中存在等待的 Goroutine 时，运行 `<-ch` 的执行过程。发送队列头的 [`runtime.sudog`](https://draveness.me/golang/tree/runtime.sudog) 中的元素会替换接收索引 `recvx` 所在位置的元素，原有的元素会被拷贝到接收数据的变量对应的内存空间上。
 
-### 缓冲区 [#](#%e7%bc%93%e5%86%b2%e5%8c%ba-1)
+### 缓冲区
 
 当 Channel 的缓冲区中已经包含数据时，从 Channel 中接收数据会直接从缓冲区中 `recvx` 的索引位置中取出数据进行处理：
 
@@ -459,7 +457,7 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 
 收尾工作包括递增 `recvx`，一旦发现索引超过了 Channel 的容量时，会将它归零重置循环队列的索引；除此之外，该函数还会减少 `qcount` 计数器并释放持有 Channel 的锁。
 
-### 阻塞接收 [#](#%e9%98%bb%e5%a1%9e%e6%8e%a5%e6%94%b6)
+### 阻塞接收
 
 当 Channel 的发送队列中不存在等待的 Goroutine 并且缓冲区中也不存在任何数据时，从管道中接收数据的操作会变成阻塞的，然而不是所有的接收操作都是阻塞的，与 `select` 语句结合使用时就可能会使用到非阻塞的接收操作：
 
@@ -492,7 +490,7 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 
 完成入队之后，上述代码还会调用 [`runtime.goparkunlock`](https://draveness.me/golang/tree/runtime.goparkunlock) 立刻触发 Goroutine 的调度，让出处理器的使用权并等待调度器的调度。
 
-### 小结 [#](#%e5%b0%8f%e7%bb%93-1)
+### 小结
 
 我们梳理一下从 Channel 中接收数据时可能会发生的五种情况：
 
@@ -507,7 +505,7 @@ func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool)
 1.  当 Channel 为空时；
 2.  当缓冲区中不存在数据并且也不存在数据的发送者时；
 
-## 6.4.6 关闭管道 [#](#646-%e5%85%b3%e9%97%ad%e7%ae%a1%e9%81%93)
+## 6.4.6 关闭管道
 
 编译器会将用于关闭管道的 `close` 关键字转换成 `OCLOSE` 节点以及 [`runtime.closechan`](https://draveness.me/golang/tree/runtime.closechan) 函数。
 
@@ -560,11 +558,11 @@ func closechan(c *hchan) {
 
 该函数在最后会为所有被阻塞的 Goroutine 调用 [`runtime.goready`](https://draveness.me/golang/tree/runtime.goready) 触发调度。
 
-## 6.4.7 小结 [#](#647-%e5%b0%8f%e7%bb%93)
+## 6.4.7 小结
 
 Channel 是 Go 语言能够提供强大并发能力的原因之一，我们在这一节中分析了 Channel 的设计原理、数据结构以及发送数据、接收数据和关闭 Channel 这些基本操作，相信能够帮助大家更好地理解 Channel 的工作原理。
 
-## 6.4.8 扩展阅读 [#](#648-%e6%89%a9%e5%b1%95%e9%98%85%e8%af%bb)
+## 6.4.8 扩展阅读
 
 * [Dmitry Vyukov. Oct, 2014.“runtime: lock-free channels”](https://github.com/golang/go/issues/8899)
 * [Simple, fast, and practical non-blocking and blocking concurrent queue algorithms](https://doi.org/10.1145/248052.248106)

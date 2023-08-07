@@ -1,10 +1,8 @@
-# 9.1 JSON [#](#91-json)
-
-```
+# 9.1 JSON
 
 JSON（JavaScript 对象表示，JavaScript Object Notation）作为一种轻量级的数据交换格式[1](#fn:1)，在今天几乎占据了绝大多数的市场份额。虽然与更紧凑的数据交换格式相比，它的序列化和反序列化性能不足，但是 JSON 提供了良好的可读性与易用性，在不追求极致机制性能的情况下，使用 JSON 作为序列化格式是一种非常好的选择。
 
-## 9.1.1 设计原理 [#](#911-%e8%ae%be%e8%ae%a1%e5%8e%9f%e7%90%86)
+## 9.1.1 设计原理
 
 几乎所有的现代编程语言都会将处理 JSON 的函数直接纳入标准库，Go 语言也不例外，它通过 [`encoding/json`](https://golang.org/pkg/encoding/json/) 对外提供标准的 JSON 序列化和反序列化方法，即 [`encoding/json.Marshal`](https://draveness.me/golang/tree/encoding/json.Marshal) 和 [`encoding/json.Unmarshal`](https://draveness.me/golang/tree/encoding/json.Unmarshal)，它们也是包中最常用的两个方法。
 
@@ -16,7 +14,7 @@ JSON（JavaScript 对象表示，JavaScript Object Notation）作为一种轻量
 
 Go 语言 JSON 标准库编码和解码的过程大量地运用了反射这一特性，你会在本节的后半部分看到大量的反射代码，这一小节就不过多介绍了。我们在这里会简单介绍 JSON 标准库中的接口和标签，这是它为开发者提供的为数不多的影响编解码过程的接口。
 
-### 接口 [#](#%e6%8e%a5%e5%8f%a3)
+### 接口
 
 JSON 标准库中提供了 [`encoding/json.Marshaler`](https://draveness.me/golang/tree/encoding/json.Marshaler) 和 [`encoding/json.Unmarshaler`](https://draveness.me/golang/tree/encoding/json.Unmarshaler) 两个接口分别可以影响 JSON 的序列化和反序列化结果：
 
@@ -44,7 +42,7 @@ type TextUnmarshaler interface {
 
 一旦发现 JSON 相关的序列化方法没有被实现，上述两个方法会作为候选方法被 JSON 标准库调用并参与编解码的过程。总的来说，我们可以在任意类型上实现上述这四个方法自定义最终的结果，后面的两个方法的适用范围更广，但是不会被 JSON 标准库优先调用。
 
-### 标签 [#](#%e6%a0%87%e7%ad%be)
+### 标签
 
 Go 语言的结构体标签也是一个比较有趣的功能，在默认情况下，当我们在序列化和反序列化结构体时，标准库都会认为字段名和 JSON 中的键具有一一对应的关系，然而 Go 语言的字段一般都是驼峰命名法，JSON 中下划线的命名方式相对比较常见，所以使用标签这一特性直接建立键与字段之间的映射关系是一个非常方便的设计。
 
@@ -74,7 +72,7 @@ func parseTag(tag string) (string, tagOptions) {
 
 从该方法的实现中，我们能分析出 JSON 标准库中的合法标签是什么形式的：标签名和标签选项都以 `,` 连接，最前面的字符串为标签名，后面的都是标签选项。
 
-## 9.1.2 序列化 [#](#912-%e5%ba%8f%e5%88%97%e5%8c%96)
+## 9.1.2 序列化
 
 [`encoding/json.Marshal`](https://draveness.me/golang/tree/encoding/json.Marshal) 是 JSON 标准库中提供的最简单的序列化函数，它会接收一个 `interface{}` 类型的值作为参数，这也意味着几乎全部的 Go 语言变量都可以被 JSON 标准库序列化，为了提供如此复杂和通用的功能，在静态语言中使用反射是常见的选项，下面我们来深入了解一下它的实现：
 
@@ -237,7 +235,7 @@ FieldLoop:
 
 树形结构的所有叶节点都是基础类型编码器或者开发者自定义的编码器，得到了整棵树的编码器之后会调用 [`encoding/json.encodeState.reflectValue`](https://draveness.me/golang/tree/encoding/json.encodeState.reflectValue) 从根节点依次调用整棵树的序列化函数，整个 JSON 序列化的过程查找类型和子类型的编码方法并调用的过程，它利用了大量反射的特性做到了足够的通用。
 
-## 9.1.3 反序列化 [#](#913-%e5%8f%8d%e5%ba%8f%e5%88%97%e5%8c%96)
+## 9.1.3 反序列化
 
 标准库会使用 [`encoding/json.Unmarshal`](https://draveness.me/golang/tree/encoding/json.Unmarshal) 处理 JSON 的反序列化，与执行过程确定的序列化相比，反序列化的过程是逐渐探索的过程，所以会复杂很多，开销也会高出几倍。因为 Go 语言的表达能力比较有限，反序列化的使用相对比较繁琐，所以需要传入一个变量帮助标准库进行反序列化：
 
@@ -408,7 +406,7 @@ Switch:
 
 因为 JSON 中的字面量其实也只包含字符串、数字、布尔值和空值几种，所以该方法的实现也不会特别复杂，当该方法扫描了对应的字面量之后，会调用 [`encoding/json.decodeState.literalStore`](https://draveness.me/golang/tree/encoding/json.decodeState.literalStore) 字面量存储到反射类型变量所在的地址中，在这个过程中会调用反射的 [`reflect.Value.SetInt`](https://draveness.me/golang/tree/reflect.Value.SetInt)、[`reflect.Value.SetFloat`](https://draveness.me/golang/tree/reflect.Value.SetFloat) 和 [`reflect.Value.SetBool`](https://draveness.me/golang/tree/reflect.Value.SetBool) 等方法。
 
-## 9.1.4 小结 [#](#914-%e5%b0%8f%e7%bb%93)
+## 9.1.4 小结
 
 JSON 本身就是一种树形的数据结构，无论是序列化还是反序列化，都会遵循自顶向下的编码和解码过程，使用递归的方式处理 JSON 对象。作为标准库的 JSON 提供的接口非常简洁，虽然它的性能一直被开发者所诟病，但是作为框架它提供了很好的通用性，通过分析 JSON 库的实现，我们也可以从中学习到使用反射的各种方法。
 

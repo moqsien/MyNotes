@@ -1,6 +1,4 @@
-# 5.2 select [#](#52-select)
-
-```
+# 5.2 select
 
 `select` 是操作系统中的系统调用，我们经常会使用 `select`、`poll` 和 `epoll` 等函数构建 I/O 多路复用模型提升程序的性能。Go 语言的 `select` 与操作系统中的 `select` 比较相似，本节会介绍 Go 语言 `select` 关键字常见的现象、数据结构以及实现原理。
 
@@ -29,7 +27,7 @@ func fibonacci(c, quit chan int) {
 
 上述控制结构会等待 `c <- x` 或者 `<-quit` 两个表达式中任意一个返回。无论哪一个表达式返回都会立刻执行 `case` 中的代码，当 `select` 中的两个 `case` 同时被触发时，会随机执行其中的一个。
 
-## 5.2.1 现象 [#](#521-%e7%8e%b0%e8%b1%a1)
+## 5.2.1 现象
 
 当我们在 Go 语言中使用 `select` 控制结构时，会遇到两个有趣的现象：
 
@@ -38,7 +36,7 @@ func fibonacci(c, quit chan int) {
 
 这两个现象是学习 `select` 时经常会遇到的，我们来深入了解具体场景并分析这两个现象背后的设计原理。
 
-### 非阻塞的收发 [#](#%e9%9d%9e%e9%98%bb%e5%a1%9e%e7%9a%84%e6%94%b6%e5%8f%91)
+### 非阻塞的收发
 
 在通常情况下，`select` 语句会阻塞当前 Goroutine 并等待多个 Channel 中的一个达到可以收发的状态。但是如果 `select` 控制结构中包含 `default` 语句，那么这个 `select` 语句在执行时会遇到以下两种情况：
 
@@ -98,7 +96,7 @@ default:
 
 我们可以从上面的几个提交中看到非阻塞收发从最初版本到现在的演变。
 
-### 随机执行 [#](#%e9%9a%8f%e6%9c%ba%e6%89%a7%e8%a1%8c)
+### 随机执行
 
 另一个使用 `select` 遇到的情况是同时有多个 `case` 就绪时，`select` 会选择哪个 `case` 执行的问题，我们通过下面的代码可以简单了解一下：
 
@@ -132,7 +130,7 @@ case1
 
 这个设计是在十多年前被 [select](https://github.com/golang/go/commit/cb9b1038db77198c2b0961634cf161258af2374d) 提交[5](#fn:5)引入并一直保留到现在的，虽然中间经历过一些修改[6](#fn:6)，但是语义一直都没有改变。在上面的代码中，两个 `case` 都是同时满足执行条件的，如果我们按照顺序依次判断，那么后面的条件永远都会得不到执行，而随机的引入就是为了避免饥饿问题的发生。
 
-## 5.2.2 数据结构 [#](#522-%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84)
+## 5.2.2 数据结构
 
 `select` 在 Go 语言的源代码中不存在对应的结构体，但是我们使用 [`runtime.scase`](https://draveness.me/golang/tree/runtime.scase) 结构体表示 `select` 控制结构中的 `case`：
 
@@ -145,7 +143,7 @@ type scase struct {
 
 因为非默认的 `case` 中都与 Channel 的发送和接收有关，所以 [`runtime.scase`](https://draveness.me/golang/tree/runtime.scase) 结构体中也包含一个 [`runtime.hchan`](https://draveness.me/golang/tree/runtime.hchan) 类型的字段存储 `case` 中使用的 Channel。
 
-## 5.2.3 实现原理 [#](#523-%e5%ae%9e%e7%8e%b0%e5%8e%9f%e7%90%86)
+## 5.2.3 实现原理
 
 `select` 语句在编译期间会被转换成 `OSELECT` 节点。每个 `OSELECT` 节点都会持有一组 `OCASE` 节点，如果 `OCASE` 的执行条件是空，那就意味着这是一个 `default` 节点。
 
@@ -164,7 +162,7 @@ type scase struct {
 
 上述四种情况不仅会涉及编译器的重写和优化，还会涉及 Go 语言的运行时机制，我们会从编译期间和运行时两个角度分析上述情况。
 
-### 直接阻塞 [#](#%e7%9b%b4%e6%8e%a5%e9%98%bb%e5%a1%9e)
+### 直接阻塞
 
 首先介绍的是最简单的情况，也就是当 `select` 结构中不包含任何 `case`。我们截取 [`cmd/compile/internal/gc.walkselectcases`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkselectcases) 函数的前几行代码：
 
@@ -191,7 +189,7 @@ func block() {
 
 简单总结一下，空的 `select` 语句会直接阻塞当前 Goroutine，导致 Goroutine 进入无法被唤醒的永久休眠状态。
 
-### 单一管道 [#](#%e5%8d%95%e4%b8%80%e7%ae%a1%e9%81%93)
+### 单一管道
 
 如果当前的 `select` 条件只包含一个 `case`，那么编译器会将 `select` 改写成 `if` 条件语句。下面对比了改写前后的代码：
 
@@ -212,11 +210,11 @@ v, ok := <-ch // case ch <- v
 
 [`cmd/compile/internal/gc.walkselectcases`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkselectcases) 在处理单操作 `select` 语句时，会根据 Channel 的收发情况生成不同的语句。当 `case` 中的 Channel 是空指针时，会直接挂起当前 Goroutine 并陷入永久休眠。
 
-### 非阻塞操作 [#](#%e9%9d%9e%e9%98%bb%e5%a1%9e%e6%93%8d%e4%bd%9c)
+### 非阻塞操作
 
 当 `select` 中仅包含两个 `case`，并且其中一个是 `default` 时，Go 语言的编译器就会认为这是一次非阻塞的收发操作。[`cmd/compile/internal/gc.walkselectcases`](https://draveness.me/golang/tree/cmd/compile/internal/gc.walkselectcases) 会对这种情况单独处理。不过在正式优化之前，该函数会将 `case` 中的所有 Channel 都转换成指向 Channel 的地址，我们会分别介绍非阻塞发送和非阻塞接收时，编译器进行的不同优化。
 
-#### 发送 [#](#%e5%8f%91%e9%80%81)
+#### 发送
 
 首先是 Channel 的发送过程，当 `case` 中表达式的类型是 `OSEND` 时，编译器会使用条件语句和 [`runtime.selectnbsend`](https://draveness.me/golang/tree/runtime.selectnbsend) 函数改写代码：
 
@@ -245,7 +243,7 @@ func selectnbsend(c *hchan, elem unsafe.Pointer) (selected bool) {
 
 由于我们向 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 函数传入了非阻塞，所以在不存在接收方或者缓冲区空间不足时，当前 Goroutine 都不会阻塞而是会直接返回。
 
-#### 接收 [#](#%e6%8e%a5%e6%94%b6)
+#### 接收
 
 由于从 Channel 中接收数据可能会返回一个或者两个值，所以接收数据的情况会比发送稍显复杂，不过改写的套路是差不多的：
 
@@ -282,7 +280,7 @@ func selectnbrecv2(elem unsafe.Pointer, received *bool, c *hchan) (selected bool
 
 因为接收方不需要，所以 [`runtime.selectnbrecv`](https://draveness.me/golang/tree/runtime.selectnbrecv) 会直接忽略返回的布尔值，而 [`runtime.selectnbrecv2`](https://draveness.me/golang/tree/runtime.selectnbrecv2) 会将布尔值回传给调用方。与 [`runtime.chansend`](https://draveness.me/golang/tree/runtime.chansend) 一样，[`runtime.chanrecv`](https://draveness.me/golang/tree/runtime.chanrecv) 也提供了一个 `block` 参数用于控制这次接收是否阻塞。
 
-### 常见流程 [#](#%e5%b8%b8%e8%a7%81%e6%b5%81%e7%a8%8b)
+### 常见流程
 
 在默认的情况下，编译器会使用如下的流程处理 `select` 语句：
 
@@ -321,7 +319,7 @@ if chosen == 2 {
 1.  执行一些必要的初始化操作并确定 `case` 的处理顺序；
 2.  在循环中根据 `case` 的类型做出不同的处理；
 
-#### 初始化 [#](#%e5%88%9d%e5%a7%8b%e5%8c%96)
+#### 初始化
 
 [`runtime.selectgo`](https://draveness.me/golang/tree/runtime.selectgo) 函数首先会进行执行必要的初始化操作并决定处理 `case` 的两个顺序 — 轮询顺序 `pollOrder` 和加锁顺序 `lockOrder`：
 
@@ -363,7 +361,7 @@ func selectgo(cas0 *scase, order0 *uint16, ncases int) (int, bool) {
 
 随机的轮询顺序可以避免 Channel 的饥饿问题，保证公平性；而根据 Channel 的地址顺序确定加锁顺序能够避免死锁的发生。这段代码最后调用的 [`runtime.sellock`](https://draveness.me/golang/tree/runtime.sellock) 会按照之前生成的加锁顺序锁定 `select` 语句中包含所有的 Channel。
 
-#### 循环 [#](#%e5%be%aa%e7%8e%af)
+#### 循环
 
 当我们为 `select` 语句锁定了所有 Channel 之后就会进入 [`runtime.selectgo`](https://draveness.me/golang/tree/runtime.selectgo) 函数的主循环，它会分三个阶段查找或者等待某个 Channel 准备就绪：
 
@@ -538,7 +536,7 @@ sclose:
 
 总体来看，`select` 语句中的 Channel 收发操作和直接操作 Channel 没有太多出入，只是由于 `select` 多出了 `default` 关键字所以会支持非阻塞的收发。
 
-## 5.2.4 小结 [#](#524-%e5%b0%8f%e7%bb%93)
+## 5.2.4 小结
 
 我们简单总结一下 `select` 结构的执行过程与实现原理，首先在编译期间，Go 语言会对 `select` 语句进行优化，它会根据 `select` 中 `case` 的不同选择不同的优化路径：
 
@@ -559,7 +557,7 @@ sclose:
 
 `select` 关键字是 Go 语言特有的控制结构，它的实现原理比较复杂，需要编译器和运行时函数的通力合作。
 
-## 5.2.5 延伸阅读 [#](#525-%e5%bb%b6%e4%bc%b8%e9%98%85%e8%af%bb)
+## 5.2.5 延伸阅读
 
 * [SELECT\(2\) · Linux](http://man7.org/linux/man-pages/man2/select.2.html)
 

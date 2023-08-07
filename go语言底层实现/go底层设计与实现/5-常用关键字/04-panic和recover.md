@@ -1,6 +1,4 @@
-# 5.4 panic 和 recover [#](#54-panic-%e5%92%8c-recover)
-
-```
+# 5.4 panic 和 recover
 
 本节将分析 Go 语言中两个经常成对出现的两个关键字 — `panic` 和 `recover`。这两个关键字与上一节提到的 `defer` 有紧密的联系，它们都是 Go 语言中的内置函数，也提供了互补的功能。
 
@@ -11,7 +9,7 @@
 * `panic` 能够改变程序的控制流，调用 `panic` 后会立刻停止执行当前函数的剩余代码，并在当前 Goroutine 中递归执行调用方的 `defer`；
 * `recover` 可以中止 `panic` 造成的程序崩溃。它是一个只能在 `defer` 中发挥作用的函数，在其他作用域中调用不会发挥作用；
 
-## 5.4.1 现象 [#](#541-%e7%8e%b0%e8%b1%a1)
+## 5.4.1 现象
 
 我们先通过几个例子了解一下使用 `panic` 和 `recover` 关键字时遇到的现象，部分现象也与上一节分析的 `defer` 关键字有关：
 
@@ -19,7 +17,7 @@
 * `recover` 只有在 `defer` 中调用才会生效；
 * `panic` 允许在 `defer` 中嵌套多次调用；
 
-### 跨协程失效 [#](#%e8%b7%a8%e5%8d%8f%e7%a8%8b%e5%a4%b1%e6%95%88)
+### 跨协程失效
 
 首先要介绍的现象是 `panic` 只会触发当前 Goroutine 的延迟函数调用，我们可以通过如下所示的代码了解该现象：
 
@@ -50,7 +48,7 @@ panic:
 
 如上图所示，多个 Goroutine 之间没有太多的关联，一个 Goroutine 在 `panic` 时也不应该执行其他 Goroutine 的延迟函数。
 
-### 失效的崩溃恢复 [#](#%e5%a4%b1%e6%95%88%e7%9a%84%e5%b4%a9%e6%ba%83%e6%81%a2%e5%a4%8d)
+### 失效的崩溃恢复
 
 初学 Go 语言的读者可能会写出下面的代码，在主程序中调用 `recover` 试图中止程序的崩溃，但是从运行的结果中我们也能看出，下面的程序没有正常退出。
 
@@ -76,7 +74,7 @@ exit status 2
 
 仔细分析一下这个过程就能理解这种现象背后的原因，`recover` 只有在发生 `panic` 之后调用才会生效。然而在上面的控制流中，`recover` 是在 `panic` 之前调用的，并不满足生效的条件，所以我们需要在 `defer` 中使用 `recover` 关键字。
 
-### 嵌套崩溃 [#](#%e5%b5%8c%e5%a5%97%e5%b4%a9%e6%ba%83)
+### 嵌套崩溃
 
 Go 语言中的 `panic` 是可以多次嵌套调用的。一些熟悉 Go 语言的读者很可能也不知道这个知识点，如下所示的代码就展示了如何在 `defer` 函数中多次调用 `panic`：
 
@@ -106,7 +104,7 @@ exit status 2
 
 从上述程序输出的结果，我们可以确定程序多次调用 `panic` 也不会影响 `defer` 函数的正常执行，所以使用 `defer` 进行收尾工作一般来说都是安全的。
 
-## 5.4.2 数据结构 [#](#542-%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84)
+## 5.4.2 数据结构
 
 `panic` 关键字在 Go 语言的源代码是由数据结构 [`runtime._panic`](https://draveness.me/golang/tree/runtime._panic) 表示的。每当我们调用 `panic` 都会创建一个如下所示的数据结构存储相关信息：
 
@@ -133,7 +131,7 @@ type _panic struct {
 
 结构体中的 `pc`、`sp` 和 `goexit` 三个字段都是为了修复 [`runtime.Goexit`](https://draveness.me/golang/tree/runtime.Goexit) 带来的问题引入的[1](#fn:1)。[`runtime.Goexit`](https://draveness.me/golang/tree/runtime.Goexit) 能够只结束调用该函数的 Goroutine 而不影响其他的 Goroutine，但是该函数会被 `defer` 中的 `panic` 和 `recover` 取消[2](#fn:2)，引入这三个字段就是为了保证该函数的一定会生效。
 
-## 5.4.3 程序崩溃 [#](#543-%e7%a8%8b%e5%ba%8f%e5%b4%a9%e6%ba%83)
+## 5.4.3 程序崩溃
 
 这里先介绍分析 `panic` 函数是终止程序的实现原理。编译器会将关键字 `panic` 转换成 [`runtime.gopanic`](https://draveness.me/golang/tree/runtime.gopanic)，该函数的执行过程包含以下几个步骤：
 
@@ -206,7 +204,7 @@ func fatalpanic(msgs *_panic) {
 
 打印崩溃消息后会调用 [`runtime.exit`](https://draveness.me/golang/tree/runtime.exit) 退出当前程序并返回错误码 2，程序的正常退出也是通过 [`runtime.exit`](https://draveness.me/golang/tree/runtime.exit) 实现的。
 
-## 5.4.4 崩溃恢复 [#](#544-%e5%b4%a9%e6%ba%83%e6%81%a2%e5%a4%8d)
+## 5.4.4 崩溃恢复
 
 到这里我们已经掌握了 `panic` 退出程序的过程，接下来将分析 `defer` 中的 `recover` 是如何中止程序崩溃的。编译器会将关键字 `recover` 转换成 [`runtime.gorecover`](https://draveness.me/golang/tree/runtime.gorecover)：
 
@@ -282,7 +280,7 @@ func deferproc(siz int32, fn *funcval) {
 
 跳转到 [`runtime.deferreturn`](https://draveness.me/golang/tree/runtime.deferreturn) 函数之后，程序就已经从 `panic` 中恢复了并执行正常的逻辑，而 [`runtime.gorecover`](https://draveness.me/golang/tree/runtime.gorecover) 函数也能从 [`runtime._panic`](https://draveness.me/golang/tree/runtime._panic) 结构中取出了调用 `panic` 时传入的 `arg` 参数并返回给调用方。
 
-## 5.4.5 小结 [#](#545-%e5%b0%8f%e7%bb%93)
+## 5.4.5 小结
 
 分析程序的崩溃和恢复过程比较棘手，代码不是特别容易理解。我们在本节的最后还是简单总结一下程序崩溃和恢复的过程：
 
@@ -299,7 +297,7 @@ func deferproc(siz int32, fn *funcval) {
 
 分析的过程涉及了很多语言底层的知识，源代码阅读起来也比较晦涩，其中充斥着反常规的控制流程，通过程序计数器来回跳转，不过对于我们理解程序的执行流程还是很有帮助。
 
-## 5.4.6 延伸阅读 [#](#546-%e5%bb%b6%e4%bc%b8%e9%98%85%e8%af%bb)
+## 5.4.6 延伸阅读
 
 * [Dive into stack and defer/panic/recover in go](http://hustcat.github.io/dive-into-stack-defer-panic-recover-in-go/)
 * [Defer, Panic, and Recover](https://blog.golang.org/defer-panic-and-recover)
