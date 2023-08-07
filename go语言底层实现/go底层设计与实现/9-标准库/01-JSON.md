@@ -412,7 +412,7 @@ Switch:
 
 JSON 本身就是一种树形的数据结构，无论是序列化还是反序列化，都会遵循自顶向下的编码和解码过程，使用递归的方式处理 JSON 对象。作为标准库的 JSON 提供的接口非常简洁，虽然它的性能一直被开发者所诟病，但是作为框架它提供了很好的通用性，通过分析 JSON 库的实现，我们也可以从中学习到使用反射的各种方法。
 
-[上一节](/golang/docs/part4-advanced/ch08-metaprogramming/golang-code-gen/) [下一节](/golang/docs/part4-advanced/ch09-stdlib/golang-net-http/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/8-元编程/02-代码生成.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/9-标准库/02-HTTP.md)
 
 * * *
 

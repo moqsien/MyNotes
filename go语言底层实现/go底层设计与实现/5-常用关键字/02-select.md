@@ -563,7 +563,7 @@ sclose:
 
 * [SELECT\(2\) · Linux](http://man7.org/linux/man-pages/man2/select.2.html)
 
-[上一节](/golang/docs/part2-foundation/ch05-keyword/golang-for-range/) [下一节](/golang/docs/part2-foundation/ch05-keyword/golang-defer/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/01-for和range.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/03-defer.md)
 
 * * *
 

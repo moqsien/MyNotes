@@ -574,7 +574,7 @@ Channel 是 Go 语言能够提供强大并发能力的原因之一，我们在�
 * [Why build concurrency on the ideas of CSP\?](https://golang.org/doc/faq#csp)
 * [Performance without the event loop](https://dave.cheney.net/2015/08/08/performance-without-the-event-loop)
 
-[上一节](/golang/docs/part3-runtime/ch06-concurrency/golang-timer/) [下一节](/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/6-并发编程/03-定时器.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/6-并发编程/05-调度器.md)
 
 * * *
 

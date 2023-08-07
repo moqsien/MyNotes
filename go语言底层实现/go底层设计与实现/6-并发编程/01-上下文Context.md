@@ -342,7 +342,7 @@ Go 语言中的 [`context.Context`](https://draveness.me/golang/tree/context.Con
 * [Go Concurrency Patterns: Context](https://blog.golang.org/context)
 * [Using context cancellation in Go](https://www.sohamkamani.com/blog/golang/2018-06-17-golang-using-context-cancellation/)
 
-[上一节](/golang/docs/part2-foundation/ch05-keyword/golang-make-and-new/) [下一节](/golang/docs/part3-runtime/ch06-concurrency/golang-sync-primitives/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/05-make和new.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/6-并发编程/02-同步原语与锁.md)
 
 * * *
 

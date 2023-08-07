@@ -617,7 +617,7 @@ Go 语言的编译器为了支持开放编码在中间代码生成阶段做出�
 * [Dive into stack and defer/panic/recover in go](http://hustcat.github.io/dive-into-stack-defer-panic-recover-in-go/)
 * [Defer, Panic, and Recover](https://blog.golang.org/defer-panic-and-recover)
 
-[上一节](/golang/docs/part2-foundation/ch05-keyword/golang-select/) [下一节](/golang/docs/part2-foundation/ch05-keyword/golang-panic-recover/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/02-select.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/04-panic和recover.md)
 
 * * *
 

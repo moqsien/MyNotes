@@ -616,7 +616,7 @@ func (mux *ServeMux) match(path string) (h Handler, pattern string) {
 
 Go 语言的 HTTP 标准库提供了非常丰富的功能，很多语言的标准库只提供了最基本的功能，实现 HTTP 客户端和服务器往往都需要借助其他开源的框架，但是 Go 语言的很多项目都会直接使用标准库实现 HTTP 服务器，这也从侧面说明了 Go 语言标准库的价值。
 
-[上一节](/golang/docs/part4-advanced/ch09-stdlib/golang-json/) [下一节](/golang/docs/part4-advanced/ch09-stdlib/golang-database-sql/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/9-标准库/01-JSON.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/9-标准库/03-数据库.md)
 
 * * *
 

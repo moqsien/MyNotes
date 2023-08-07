@@ -525,7 +525,7 @@ for ; hb != false; hv1, hb = <-ha {
 
 这一节介绍的两个关键字 `for` 和 `range` 都是我们在学习和使用 Go 语言中无法绕开的，通过分析和研究它们的底层原理，让我们对实现细节有了更清楚的认识，包括 Go 语言遍历数组和切片时会复用变量、哈希表的随机遍历原理以及底层的一些优化，这都能帮助我们更好地理解和使用 Go 语言。
 
-[上一节](/golang/docs/part2-foundation/ch04-basic/golang-reflect/) [下一节](/golang/docs/part2-foundation/ch05-keyword/golang-select/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/4-语言基础/03-反射.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/02-select.md)
 
 * * *
 

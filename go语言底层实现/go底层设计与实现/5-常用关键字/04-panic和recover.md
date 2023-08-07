@@ -304,7 +304,7 @@ func deferproc(siz int32, fn *funcval) {
 * [Dive into stack and defer/panic/recover in go](http://hustcat.github.io/dive-into-stack-defer-panic-recover-in-go/)
 * [Defer, Panic, and Recover](https://blog.golang.org/defer-panic-and-recover)
 
-[上一节](/golang/docs/part2-foundation/ch05-keyword/golang-defer/) [下一节](/golang/docs/part2-foundation/ch05-keyword/golang-make-and-new/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/03-defer.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/05-make和new.md)
 
 * * *
 

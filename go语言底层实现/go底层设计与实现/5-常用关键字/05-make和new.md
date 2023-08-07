@@ -124,7 +124,7 @@ func newobject(typ *_type) unsafe.Pointer {
 
 这里我们简单总结一下 Go 语言中 `make` 和 `new` 关键字的实现原理，`make` 关键字的作用是创建切片、哈希表和 Channel 等内置的数据结构，而 `new` 的作用是为类型申请一片内存空间，并返回指向这片内存的指针。
 
-[上一节](/golang/docs/part2-foundation/ch05-keyword/golang-panic-recover/) [下一节](/golang/docs/part3-runtime/ch06-concurrency/golang-context/)
+[上一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/5-常用关键字/04-panic和recover.md) [下一节](https://github.com/moqsien/MyNotes/blob/main/go语言底层实现/go底层设计与实现/6-并发编程/01-上下文Context.md)
 
 * * *
 
